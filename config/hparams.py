@@ -25,7 +25,7 @@ class Hparams:
     test          : bool = True            # test code before running, if testing, no checkpoints are written
     wandb_project : str  = (f"{'test-'*test}altegrad")
     root_dir      : str  = os.getcwd()  # root_dir
-    dataset     : Optional[str] = "BaselineGraphDataset"     # dataset, use <Dataset>Eval for FT
+    dataset     : Optional[str] = "SpecterEmbeddings"     # dataset, use <Dataset>Eval for FT
     model_type     : Optional[str] = "LogisticRegression"     # dataset, use <Dataset>Eval for FT
     log_level : str             = logging.INFO # Log info level https://docs.python.org/3/howto/logging.html 
     seed_everything: Optional[int] = 42   # seed for the whole run

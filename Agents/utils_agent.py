@@ -1,7 +1,7 @@
 from sklearn.utils import shuffle
 from torch.utils.data import DataLoader
 
-from Dataset.dataset import BaselineGraphDataset
+from Dataset.dataset import BaselineGraphDataset, SpecterEmbeddings
 from Model.LogisticRegression import LogisticRegression
 
 def get_train_dataset(params):
@@ -10,7 +10,10 @@ def get_train_dataset(params):
         train_dataset = BaselineGraphDataset(params)
         train_dataset.build_train()
         train_dataloader = DataLoader(train_dataset, shuffle=True, batch_size=params.data_param.batch_size, num_workers=params.data_param.num_workers)
-
+    elif params.hparams.dataset == 'SpecterEmbeddings':
+        train_dataset = SpecterEmbeddings(params)
+        train_dataset.build_train()
+        train_dataloader = DataLoader(train_dataset, shuffle=True, batch_size=params.data_param.batch_size, num_workers=params.data_param.num_workers)
     return train_dataloader
 
 def get_model(params):
