@@ -82,7 +82,6 @@ class SpecterEmbeddings(object):
                 sentence_level_embeddings = model.encode(self.abstracts[abstract_id], convert_to_numpy = True )
                 doc_level_embedding = sentence_level_embeddings
                 embeddings.append(doc_level_embedding)
-                break            
             self.embeddings = np.array(embeddings)
             np.save(open(self.embeddings_path, "wb"), self.embeddings)
             
