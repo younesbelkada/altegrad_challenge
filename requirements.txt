@@ -1,2 +1,3 @@
 pytorch-lightning
 wandb
+sentence-transformers
