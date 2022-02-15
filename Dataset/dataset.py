@@ -194,7 +194,10 @@ class SpecterEmbeddingsGraph(Dataset):
         with open(self.path_predict, 'r') as file:
             for line in file:
                 line = line.split(',')
-                X.append((int(line[0]), int(line[1])))
+                deg1 = self.G.degree(int(line[0])) + self.G.degree(int(line[1]))
+                deg2 = abs(self.G.degree(int(line[0])) - self.G.degree(int(line[1])))
+                X.append((int(line[0]), int(line[1]), deg1, deg2))
+
         self.X = np.array(X)
         self.y = np.zeros(self.X.shape[0])
 

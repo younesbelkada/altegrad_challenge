@@ -33,7 +33,7 @@ class Hparams:
     max_epochs     : int           = 1000    # maximum number of epochs
     weights_path   : str           = "weights"
     dev_run        : bool          = False
-    train          : bool          = True
+    train          : bool          = False
     best_model     : str           = "attractive-infatuation-244"
 
 @dataclass
