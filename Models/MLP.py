@@ -10,7 +10,11 @@ class MLP(nn.Module):
             nn.BatchNorm1d(hidden_dim),
             nn.Linear(hidden_dim, hidden_dim),
             nn.BatchNorm1d(hidden_dim),
-            nn.Linear(hidden_dim, 1)
+            nn.Linear(hidden_dim, hidden_dim//2),
+            nn.BatchNorm1d(hidden_dim//2),
+            nn.Linear(hidden_dim//2, hidden_dim//4),
+            nn.BatchNorm1d(hidden_dim//4),
+            nn.Linear(hidden_dim//4, 1)
         )
 
     def forward(self, x):

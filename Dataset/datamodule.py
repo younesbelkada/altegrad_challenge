@@ -30,31 +30,40 @@ class BaseDataModule(LightningDataModule):
             self.dataset.build_predict()
 
     def train_dataloader(self):
+        coll_fn = None
+        if hasattr(self.dataset,"collate_fn"):
+            coll_fn = self.dataset.collate_fn 
         train_loader = DataLoader(
             self.train_dataset, 
             shuffle=True, 
             batch_size  = self.config.batch_size, 
             num_workers = self.config.num_workers,
-            collate_fn= self.dataset.collate_fn if self.dataset.collate_fn is not None else None
+            collate_fn= coll_fn
         )
         return train_loader
 
     def val_dataloader(self):
+        coll_fn = None
+        if hasattr(self.dataset,"collate_fn"):
+            coll_fn = self.dataset.collate_fn 
         val_loader = DataLoader(
             self.val_dataset, 
             shuffle = False, 
             batch_size  = self.config.batch_size, 
             num_workers = self.config.num_workers,
-            collate_fn=self.dataset.collate_fn if self.dataset.collate_fn is not None else None
+            collate_fn=coll_fn
         )
         return val_loader
 
     def predict_dataloader(self):
+        coll_fn = None
+        if hasattr(self.dataset,"collate_fn"):
+            coll_fn = self.dataset.collate_fn 
         predict_loader = DataLoader(
             self.dataset,
             batch_size=self.config.batch_size,
             num_workers=self.config.num_workers,
             shuffle = False,
-            collate_fn=self.dataset.collate_fn if self.dataset.collate_fn is not None else None
+            collate_fn=coll_fn
         )
         return predict_loader

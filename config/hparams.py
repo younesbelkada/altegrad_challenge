@@ -34,24 +34,24 @@ class Hparams:
     weights_path   : str           = "weights"
     dev_run        : bool          = False
     train          : bool          = True
-    best_model     : str           = "deeply-tulip-125"
+    best_model     : str           = "attractive-infatuation-244"
 
 @dataclass
 class NetworkParams:
-    network_name   : Optional[str] = "GATModel"     # dataset, use <Dataset>Eval for FT
+    network_name   : Optional[str] = "MLP"     # dataset, use <Dataset>Eval for FT
     weight_checkpoints : str = ""
     artifact : str = ""
     vocab_size : int = 138499
     hidden_dim : int = 128
-    embed_dim : int = 768
-    heads : int = 6
+    embed_dim : int = 768 + 1
+    heads : int = 4
 
 @dataclass
 class OptimizerParams: 
     """Optimization parameters"""
 
     optimizer           : str            = "Adam"  # Optimizer default vit: AdamW, default resnet50: Adam
-    lr                  : float          = 3e-4     # learning rate, default = 5e-4
+    lr                  : float          = 3e-5     # learning rate, default = 5e-4
     min_lr              : float          = 5e-6     # min lr reached at the end of the cosine schedule
     scheduler           : bool           = False
 
@@ -60,9 +60,9 @@ class DatasetParams:
     """Dataset Parameters
     ! The batch_size and number of crops should be defined here
     """
-    dataset_name   : Optional[str] = "SubGraphsDataset"     # dataset, use <Dataset>Eval for FT
+    dataset_name   : Optional[str] = "SpecterEmbeddingsGraph"     # dataset, use <Dataset>Eval for FT
     num_workers       : int         = 20         # number of workers for dataloadersint
-    batch_size        : int         = 64          # batch_size
+    batch_size        : int         = 512          # batch_size
     split_val         : float       = 0.2
     root_dataset      : Optional[str] = osp.join(os.getcwd(), "input")
     embeddings_file    : str          = osp.join(os.getcwd(), "input", "embeddings.npy")
