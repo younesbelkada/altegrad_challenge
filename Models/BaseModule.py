@@ -3,27 +3,30 @@ from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 from pytorch_lightning import LightningModule
 from torch.nn import functional as F
 import torch
+
 from utils.agent_utils import get_net
 
 class BaseModule(LightningModule):
     def __init__(self, network_param, optim_param):
         """method used to define our model parameters
         """
-        super().__init__()
-        
+        super(BaseModule, self).__init__()
+
         # loss function
         self.loss = nn.CrossEntropyLoss()
 
         self.optim_param = optim_param
         self.lr = optim_param.lr
-            
+
         # get model
-        self.model = get_net(network_param, network_param)
-        if network_param.weight_checkpoint != "":
+        self.model = get_net(network_param.network_name, network_param)
+        if network_param.weight_checkpoint is not None:
             self.model.load_state_dict(torch.load(network_param.weight_checkpoint)["state_dict"])
         
     def forward(self, x, Adj = None):
-        raise NotImplementedError(f'Should be implemented in derived class!')
+
+        output = self.model(x, Adj)
+        return output
 
     def training_step(self, batch, batch_idx):
         """needs to return a loss from a single batch"""
@@ -59,9 +62,9 @@ class BaseModule(LightningModule):
 
     def _get_loss(self, batch):
         """convenience function since train/valid/test steps are similar"""
-        x1, x2 = batch
-        z1, z2 = self(x1, x2)
+        x, y = batch
+        output = self(x)
 
-        loss = self.loss(z1, z2)
+        loss = self.loss(output, y)
 
         return loss

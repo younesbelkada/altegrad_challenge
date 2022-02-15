@@ -1,13 +1,16 @@
 from pyexpat.errors import XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING
 import os
 from random import randint
+import os.path as osp
+
 import torch
 import networkx as nx
 import numpy as np
 import logging
-import os.path as osp
-
 from sentence_transformers import SentenceTransformer
+
+from utils.logger import init_logger
+
 
 def get_specter_abstracts_dict(path = '/content/CitationPredictionChallenge/Assets/abstracts.txt'):
     abstracts = dict()
@@ -71,9 +74,10 @@ class SpecterEmbeddings(object):
 
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         self.abstracts = get_specter_abstracts_dict(path = path_txt)
-        self.embeddings_path = osp.join(params.data_param.root_dataset, 'embeddings.npy')
-
         self.params = params.data_param
+        self.embeddings_file = self.params.embeddings_file
+
+        self.logger = init_logger("SpecterEmbeddings", params.hparams.log_level)
 
     def build_train(self):
         '''
@@ -82,7 +86,12 @@ class SpecterEmbeddings(object):
         model = SentenceTransformer('sentence-transformers/allenai-specter').to(self.device)
         embeddings = []
         labels = []
-        if not os.path.isfile(self.embeddings_path) or self.params.force_create:
+        if os.path.isfile(self.embeddings_file):
+            self.logger.info("Embedings file already exists, loading it directly")
+            self.logger.info(f"Loading {self.embeddings_file}")
+            self.embeddings = np.load(open(self.embeddings_file, 'rb'))
+        elif self.params.force_create:
+            self.logger.info("Force create enabled, creating the embeddings from scratch")
             i = 0
             while i < len(self.abstracts):
                 abstracts_batch = [self.abstracts[abstract_id] for abstract_id in list(self.abstracts.keys())[i:min(i+self.params.batch_size, len(self.abstracts)-1)]]
@@ -97,10 +106,7 @@ class SpecterEmbeddings(object):
             #     doc_level_embedding = sentence_level_embeddings
             #     embeddings.append(doc_level_embedding)
             self.embeddings = np.array(embeddings)
-            np.save(open(self.embeddings_path, "wb"), self.embeddings)
-            
-        else:
-            self.embeddings = np.load(open(self.embeddings_path, 'rb'))
+            np.save(open(self.embeddings_file, "wb"), self.embeddings)
 
         ## Comment créer les labels?
         m = self.G.number_of_edges()

@@ -1,4 +1,4 @@
-import BaseModule
+from Models.BaseModule import BaseModule
 
 class MLP(BaseModule):
     def __init__(self) -> None:

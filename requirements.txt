@@ -2,3 +2,5 @@ pytorch-lightning
 wandb
 sentence-transformers
 simple_parsing
+torch_sparse
+torch_geometric

@@ -2,34 +2,39 @@ import pytorch_lightning as pl
 import torch.nn as nn
 import torch.optim as optim
 import wandb
-from utils.agent_utils import get_datamodule, get_net,get_artifact
+from utils.agent_utils import get_datamodule
 from utils.callbacks import AutoSaveModelCheckpoint
 
-from Models import BaseModule
+from Models.BaseModule import BaseModule
 
 from pytorch_lightning.callbacks import (
     LearningRateMonitor,
     RichProgressBar,
 )
 
+from utils.agent_utils import get_artifact
+from utils.logger import init_logger
 
 class BaseTrainer:
     def __init__(self, config, run = None) -> None:
         self.config = config.hparams
         self.wb_run = run
         self.network_param = config.network_param 
-    
-        if  hasattr(config.network_param,"artifact"):
-            if config.network_param.artifact != "":
-                config.network_param.weight_checkpoint = get_artifact( config.network_param.artifact )
         
-        
-        self.pl_model = BaseModule(config.hparams.network_name, config.network_param,config.optim_param)
-    
-        wandb.watch(self.model)
+        logger = init_logger("BaseTrainer", self.config.log_level)
+
+        logger.info('Loading artifact...')
+        self.load_artifact(config.network_param, config.data_param)
+
+        logger.info('Loading Data module...')
         self.datamodule = get_datamodule(
-            config.data_param,config.hparams.dataset_name
+            config.data_param
         )
+
+        logger.info('Loading Model module...')
+        self.pl_model = BaseModule(config.network_param, config.optim_param)
+    
+        wandb.watch(self.pl_model.model)
     
     def run(self):
         trainer = pl.Trainer(
@@ -44,17 +49,17 @@ class BaseTrainer:
         )
         trainer.fit(self.pl_model, datamodule=self.datamodule)
 
-    
+    def load_artifact(self,network_param,data_param):
+        network_param.weight_checkpoint = get_artifact(network_param.artifact, type="model")
+        data_param.embeddings_file      = get_artifact(data_param.dataset_artifact, type="dataset")
+        
     def get_callbacks(self):
-
         callbacks = [RichProgressBar(), LearningRateMonitor()]
-
         monitor = "val/loss"
         mode = "min"
         wandb.define_metric(monitor, summary=mode)
         save_top_k = 5
         every_n_epochs = 1
-
         callbacks += [
             AutoSaveModelCheckpoint #ModelCheckpoint
             (

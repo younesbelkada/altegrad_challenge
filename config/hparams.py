@@ -25,9 +25,7 @@ class Hparams:
     test          : bool = True            # test code before running, if testing, no checkpoints are written
     wandb_project : str  = (f"{'debug-'*test}altegrad")
     root_dir      : str  = os.getcwd()  # root_dir
-    dataset_name   : Optional[str] = "SpecterEmbeddings"     # dataset, use <Dataset>Eval for FT
-    network_name   : Optional[str] = "LogisticRegression"     # dataset, use <Dataset>Eval for FT
-    log_level       : str             = logging.INFO # Log info level https://docs.python.org/3/howto/logging.html 
+    log_level       : str             = "INFO" # Log info level https://docs.python.org/3/howto/logging.html 
     seed_everything: Optional[int] = 42   # seed for the whole run
     tune_lr        : bool          = False  # tune the model on first run
     gpu            : int           = 1      # number or gpu
@@ -39,6 +37,7 @@ class Hparams:
 
 @dataclass
 class NetworkParams:
+    network_name   : Optional[str] = "GraphAutoEncoder"     # dataset, use <Dataset>Eval for FT
     weight_checkpoints : str = ""
     artifact : str = ""
     len_vocab : int = 138499
@@ -58,12 +57,14 @@ class DatasetParams:
     """Dataset Parameters
     ! The batch_size and number of crops should be defined here
     """
-    
+    dataset_name   : Optional[str] = "SpecterEmbeddings"     # dataset, use <Dataset>Eval for FT
     num_workers       : int         = 20         # number of workers for dataloadersint
     batch_size        : int         = 2048        # batch_size
     split_val         : float       = 0.2
     root_dataset      : Optional[str] = osp.join(os.getcwd(), "input")
-    force_create      : bool        = True
+    embeddings_file    : str         = osp.join(os.getcwd(), "input", "embeddings.npy")
+    force_create      : bool        = False
+    dataset_artifact    : str         = 'altegrad-gnn-link-prediction/altegrad/Allenai-SpecterEmbedding:v0'
 @dataclass
 class Parameters:
     """base options."""

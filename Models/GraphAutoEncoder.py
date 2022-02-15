@@ -3,10 +3,7 @@ import torch.nn as nn
 
 from torch.nn import Linear, ReLU
 from torch_geometric.nn import Sequential, GCNConv
-
-from Models.BaseModule import BaseModule
-
-class GraphAutoEncoder(BaseModule):
+class GraphAutoEncoder(nn.Module):
     def __init__(self, params):
         super(self, GraphAutoEncoder).__init__()
         self.params = params.network_parameters
@@ -23,6 +20,7 @@ class GraphAutoEncoder(BaseModule):
         )
 
         self.activation = nn.Sigmoid()
+    
     def forward(self, x, adj):
         """
             x: LongTensor of indices

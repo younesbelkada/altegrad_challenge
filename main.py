@@ -20,17 +20,22 @@ from utils.agent_utils import parse_params
 from config.hparams import Parameters
 #from Agents.main_agent import TrainAgent
 from Agents.BaseTrainer import BaseTrainer
-from Agents.utils_agent import get_train_dataset
+from utils.logger import init_logger
+
+
 def main():
     parameters = Parameters.parse()
-    logging.basicConfig(level=parameters.hparams.log_level)
-        # initialize wandb instance
+    # logging.basicConfig(level=parameters.hparams.log_level)
+    logger = init_logger("Main", parameters.hparams.log_level)
+
+    # initialize wandb instance
     wdb_config = parse_params(parameters)
 
     wandb.init(
-        config=wdb_config,# vars(parameters),  # FIXME use the full parameters
+        # vars(parameters),  # FIXME use the full parameters
+        config=wdb_config,
         project=parameters.hparams.wandb_project,
-        entity =parameters.hparams.wandb_entity,
+        entity=parameters.hparams.wandb_entity,
         allow_val_change=True,
     )
 
@@ -39,6 +44,7 @@ def main():
     # train_data = get_train_dataset(parameters)
 
     agent.run()
+
 
 if __name__ == '__main__':
     main()
