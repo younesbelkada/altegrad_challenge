@@ -21,19 +21,19 @@ import torch.optim as optim
 # import torch_geometric.nn as geom_nn
 
 from config.hparams import Parameters
-from Agents.main_agent import TrainAgent
+#from Agents.main_agent import TrainAgent
 from Agents.utils_agent import get_train_dataset
 
 params = Parameters.parse()
 logging.basicConfig(level=params.hparams.log_level)
 
 train_data = get_train_dataset(params)
-agent = TrainAgent(params)
+# agent = TrainAgent(params)
 
-pl_trainer = pl.Trainer(
-    default_root_dir=params.hparams.root_dir, 
-    gpus=params.hparams.gpu,
-    max_epochs=params.hparams.max_epochs
-)
-pl_trainer.fit(agent, train_data)
+# pl_trainer = pl.Trainer(
+#     default_root_dir=params.hparams.root_dir, 
+#     gpus=params.hparams.gpu,
+#     max_epochs=params.hparams.max_epochs
+# )
+# pl_trainer.fit(agent, train_data)
 #agent.run()
