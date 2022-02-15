@@ -22,8 +22,8 @@ class Hparams:
 
     
     wandb_entity  : str  = "altegrad-gnn-link-prediction"         # name of the project
-    test          : bool = False            # test code before running, if testing, no checkpoints are written
-    wandb_project : str  = (f"{'test-'*test}altegrad")
+    test          : bool = True            # test code before running, if testing, no checkpoints are written
+    wandb_project : str  = (f"{'debug-'*test}altegrad")
     root_dir      : str  = os.getcwd()  # root_dir
     dataset_name   : Optional[str] = "SpecterEmbeddings"     # dataset, use <Dataset>Eval for FT
     network_name   : Optional[str] = "LogisticRegression"     # dataset, use <Dataset>Eval for FT
@@ -55,7 +55,7 @@ class Parameters:
     """base options."""
     hparams       : Hparams         = Hparams()
     data_param    : DatasetParams   = DatasetParams()
-    network_param
+    network_param : NetworkParams   = NetworkParams()
     def __post_init__(self):
         """Post-initialization code"""
         # Mostly used to set some values based on the chosen hyper parameters
