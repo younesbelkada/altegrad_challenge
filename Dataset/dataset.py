@@ -73,15 +73,29 @@ class SpecterEmbeddings(object):
         self.abstracts = get_specter_abstracts_dict(path = path_txt)
         self.embeddings_path = osp.join(params.data_param.root_dataset, 'embeddings.npy')
 
+        self.params = params.data_param
+
     def build_train(self):
+        '''
+        https://huggingface.co/sentence-transformers/allenai-specter
+        '''
         model = SentenceTransformer('sentence-transformers/allenai-specter').to(self.device)
         embeddings = []
         labels = []
-        if not os.path.isfile(self.embeddings_path):
-            for abstract_id in self.abstracts:
-                sentence_level_embeddings = model.encode(self.abstracts[abstract_id], convert_to_numpy = True )
+        if not os.path.isfile(self.embeddings_path) or self.params.force_create:
+            i = 0
+            while i < len(self.abstracts):
+                abstracts_batch = [self.abstracts[abstract_id] for abstract_id in list(self.abstracts.keys())[i:min(i+self.params.batch_size, len(self.abstracts)-1)]]
+                sentence_level_embeddings = model.encode(abstracts_batch, convert_to_numpy = True, show_progress_bar=False)
                 doc_level_embedding = sentence_level_embeddings
-                embeddings.append(doc_level_embedding)
+                embeddings.extend(doc_level_embedding)
+                i += self.params.batch_size
+            
+            # for abstract_id in self.abstracts:
+                
+            #     sentence_level_embeddings = model.encode(self.abstracts[abstract_id], convert_to_numpy = True )
+            #     doc_level_embedding = sentence_level_embeddings
+            #     embeddings.append(doc_level_embedding)
             self.embeddings = np.array(embeddings)
             np.save(open(self.embeddings_path, "wb"), self.embeddings)
             

@@ -21,13 +21,13 @@ class Hparams:
     """Hyperparameters of for the run"""
 
     
-    wandb_entity  : str  = "altegrad"         # name of the project
-    test          : bool = True            # test code before running, if testing, no checkpoints are written
+    wandb_entity  : str  = "altegrad-gnn-link-prediction"         # name of the project
+    test          : bool = False            # test code before running, if testing, no checkpoints are written
     wandb_project : str  = (f"{'test-'*test}altegrad")
     root_dir      : str  = os.getcwd()  # root_dir
-    dataset     : Optional[str] = "SpecterEmbeddings"     # dataset, use <Dataset>Eval for FT
-    model_type     : Optional[str] = "LogisticRegression"     # dataset, use <Dataset>Eval for FT
-    log_level : str             = logging.INFO # Log info level https://docs.python.org/3/howto/logging.html 
+    dataset_name   : Optional[str] = "SpecterEmbeddings"     # dataset, use <Dataset>Eval for FT
+    network_name   : Optional[str] = "LogisticRegression"     # dataset, use <Dataset>Eval for FT
+    log_level       : str             = logging.INFO # Log info level https://docs.python.org/3/howto/logging.html 
     seed_everything: Optional[int] = 42   # seed for the whole run
     tune_lr        : bool          = False  # tune the model on first run
     gpu            : int           = 1      # number or gpu
@@ -36,6 +36,9 @@ class Hparams:
     accumulate_size: int           = 512//64    # gradient accumulation batch size
     max_epochs     : int           = 1000    # maximum number of epochs
 
+@dataclass
+class NetworkParams:
+    nb_layers : int = 2
 
 @dataclass
 class DatasetParams:
@@ -44,23 +47,15 @@ class DatasetParams:
     """
     
     num_workers       : int         = 20         # number of workers for dataloadersint
-    batch_size        : int         = 32        # batch_size
+    batch_size        : int         = 2048        # batch_size
     root_dataset      : Optional[str] = osp.join(os.getcwd(), "input")
-
+    force_create      : bool        = True
 @dataclass
 class Parameters:
     """base options."""
     hparams       : Hparams         = Hparams()
     data_param    : DatasetParams   = DatasetParams()
-    # callback_param: CallBackParams  = CallBackParams()
-    # metric_param  : MetricsParams   = MetricsParams()
-    # loss_param    : LossParams      = LossParams()
-    
-          # name of the wandb entity, here our team
-    
-    
-    
-    
+    network_param
     def __post_init__(self):
         """Post-initialization code"""
         # Mostly used to set some values based on the chosen hyper parameters
@@ -76,8 +71,6 @@ class Parameters:
         random.seed(self.hparams.seed_everything)
         torch.manual_seed(self.hparams.seed_everything)
         pl.seed_everything(self.hparams.seed_everything)
-        # if not self.hparams.gpu != 0:
-        #     torch.cuda.manual_seed_all(self.hparams.seed_everything)
 
     @classmethod
     def parse(cls):
