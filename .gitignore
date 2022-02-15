@@ -1,4 +1,6 @@
 wandb
+*.npy
+*.zip
 input/
 *.yaml
 events.*
