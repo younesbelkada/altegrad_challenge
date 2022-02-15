@@ -2,15 +2,15 @@ from sklearn.utils import shuffle
 from torch.utils.data import DataLoader
 
 from Dataset.dataset import BaselineGraphDataset, SpecterEmbeddings
-from Model.LogisticRegression import LogisticRegression
+from Models.LogisticRegression import LogisticRegression
 
 def get_train_dataset(params):
     train_dataloader = None
-    if params.hparams.dataset == 'BaselineGraphDataset':
+    if params.hparams.dataset_name == 'BaselineGraphDataset':
         train_dataset = BaselineGraphDataset(params)
         train_dataset.build_train()
         train_dataloader = DataLoader(train_dataset, shuffle=True, batch_size=params.data_param.batch_size, num_workers=params.data_param.num_workers)
-    elif params.hparams.dataset == 'SpecterEmbeddings':
+    elif params.hparams.dataset_name == 'SpecterEmbeddings':
         train_dataset = SpecterEmbeddings(params)
         train_dataset.build_train()
         train_dataloader = DataLoader(train_dataset, shuffle=True, batch_size=params.data_param.batch_size, num_workers=params.data_param.num_workers)
