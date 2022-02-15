@@ -33,17 +33,18 @@ class Hparams:
     max_epochs     : int           = 1000    # maximum number of epochs
     weights_path   : str           = "weights"
     dev_run        : bool          = False
-    train          : bool          = False
+    train          : bool          = True
     best_model     : str           = "deeply-tulip-125"
 
 @dataclass
 class NetworkParams:
-    network_name   : Optional[str] = "MLP"     # dataset, use <Dataset>Eval for FT
+    network_name   : Optional[str] = "GATModel"     # dataset, use <Dataset>Eval for FT
     weight_checkpoints : str = ""
     artifact : str = ""
     vocab_size : int = 138499
-    hidden_dim : int = 256
+    hidden_dim : int = 128
     embed_dim : int = 768
+    heads : int = 6
 
 @dataclass
 class OptimizerParams: 
@@ -59,14 +60,15 @@ class DatasetParams:
     """Dataset Parameters
     ! The batch_size and number of crops should be defined here
     """
-    dataset_name   : Optional[str] = "SpecterEmbeddings"     # dataset, use <Dataset>Eval for FT
+    dataset_name   : Optional[str] = "SubGraphsDataset"     # dataset, use <Dataset>Eval for FT
     num_workers       : int         = 20         # number of workers for dataloadersint
-    batch_size        : int         = 256          # batch_size
+    batch_size        : int         = 64          # batch_size
     split_val         : float       = 0.2
     root_dataset      : Optional[str] = osp.join(os.getcwd(), "input")
     embeddings_file    : str          = osp.join(os.getcwd(), "input", "embeddings.npy")
     force_create      : bool          = False
     dataset_artifact    : str         = 'altegrad-gnn-link-prediction/altegrad/Allenai-SpecterEmbedding:v1'
+    vocab_size : int = 138499
 
 @dataclass
 class Parameters:

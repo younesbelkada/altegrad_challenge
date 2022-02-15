@@ -5,6 +5,8 @@ from torch.utils.data import DataLoader, random_split
 
 from Dataset import dataset
 
+
+
 class BaseDataModule(LightningDataModule):
     def __init__(self, dataset_param):
         super().__init__()
@@ -33,6 +35,7 @@ class BaseDataModule(LightningDataModule):
             shuffle=True, 
             batch_size  = self.config.batch_size, 
             num_workers = self.config.num_workers,
+            collate_fn= self.dataset.collate_fn if self.dataset.collate_fn is not None else None
         )
         return train_loader
 
@@ -42,6 +45,7 @@ class BaseDataModule(LightningDataModule):
             shuffle = False, 
             batch_size  = self.config.batch_size, 
             num_workers = self.config.num_workers,
+            collate_fn=self.dataset.collate_fn if self.dataset.collate_fn is not None else None
         )
         return val_loader
 
@@ -50,6 +54,7 @@ class BaseDataModule(LightningDataModule):
             self.dataset,
             batch_size=self.config.batch_size,
             num_workers=self.config.num_workers,
-            shuffle = False
+            shuffle = False,
+            collate_fn=self.dataset.collate_fn if self.dataset.collate_fn is not None else None
         )
         return predict_loader

@@ -25,8 +25,8 @@ class BaseModule(LightningModule):
         if network_param.weight_checkpoint is not None:
             self.model.load_state_dict(torch.load(network_param.weight_checkpoint)["state_dict"])
         
-    def forward(self, x, Adj = None):
-        output = self.model(x, Adj)
+    def forward(self, x):
+        output = self.model(x)
         return output
 
     def training_step(self, batch, batch_idx):
@@ -67,7 +67,6 @@ class BaseModule(LightningModule):
             return [[optimizer], [scheduler]]
 
         return optimizer 
-
 
     def _get_loss(self, batch):
         """convenience function since train/valid/test steps are similar"""

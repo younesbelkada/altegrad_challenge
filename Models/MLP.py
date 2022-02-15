@@ -13,6 +13,6 @@ class MLP(nn.Module):
             nn.Linear(hidden_dim, 1)
         )
 
-    def forward(self, x, adj=None):
+    def forward(self, x):
         out = self.fc(x)
         return out.squeeze()

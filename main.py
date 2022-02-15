@@ -55,7 +55,7 @@ def main():
                 project = parameters.hparams.wandb_project,
                 entity = parameters.hparams.wandb_entity,
                 allow_val_change=True,
-                job_type="testing"
+                job_type="test"
         )
         agent = BaseTrainer(parameters)
         agent.predict()
