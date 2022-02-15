@@ -1,3 +1,4 @@
 pytorch-lightning
 wandb
 sentence-transformers
+simple_parsing
