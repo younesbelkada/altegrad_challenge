@@ -10,7 +10,7 @@ import logging
 from sentence_transformers import SentenceTransformer
 
 from utils.logger import init_logger
-
+from torch.utils.data import Dataset
 
 def get_specter_abstracts_dict(path = '/content/CitationPredictionChallenge/Assets/abstracts.txt'):
     abstracts = dict()
@@ -29,8 +29,9 @@ class BaselineGraphDataset(object):
             :- params -: Parameters object
         """
         logging.info("Loading the Graph object from the edgelist")
-        path_edges = osp.join(params.data_param.root_dataset, 'edgelist.txt')
+        path_edges = osp.join(params.root_dataset, 'edgelist.txt')
         self.G = nx.read_edgelist(path_edges, delimiter=',', create_using=nx.Graph(), nodetype=int)
+        
     def build_train(self):
         logging.info("Building the training dataset using the nx graph")
         nodes = list(self.G.nodes())
@@ -65,48 +66,65 @@ class BaselineGraphDataset(object):
     def __len__(self):
         return self.y.shape[0]
 
-class SpecterEmbeddings(object):
+class SpecterEmbeddings(Dataset):
     def __init__(self, params) -> None:
-        logging.info("Loading the Graph object from the edgelist and the embeddings obtained using the abstracts...")
-        path_txt = osp.join(params.data_param.root_dataset, 'abstracts.txt')
-        path_edges = osp.join(params.data_param.root_dataset, 'edgelist.txt')
+        super().__init__()
+
+        self.logger = init_logger("SpecterEmbeddings", "INFO")
+
+        self.logger.info("Loading the Graph object from the edgelist and the embeddings obtained using the abstracts...")
+        path_txt = osp.join(params.root_dataset, 'abstracts.txt')
+        path_edges = osp.join(params.root_dataset, 'edgelist.txt')
+        self.path_predict = osp.join(params.root_dataset, 'test.txt')
         self.G = nx.read_edgelist(path_edges, delimiter=',', create_using=nx.Graph(), nodetype=int)
 
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
         self.abstracts = get_specter_abstracts_dict(path = path_txt)
-        self.params = params.data_param
+        self.params = params
         self.embeddings_file = self.params.embeddings_file
 
-        self.logger = init_logger("SpecterEmbeddings", params.hparams.log_level)
+    def build_predict(self):
+        self.predict_mode = True
+        if os.path.isfile(self.embeddings_file):
+            self.logger.info("Embedings file already exists, loading it directly")
+            self.logger.info(f"Loading {self.embeddings_file}")
+            self.embeddings = np.load(open(self.embeddings_file, 'rb'))
+        else:
+            raise NotImplementedError
+        
+        X = []
+        with open(self.path_predict, 'r') as file:
+            for line in file:
+                line = line.split(',')
+                X.append((int(line[0]), int(line[1])))
+        self.X = np.array(X)
+        self.y = np.zeros(self.X.shape[0])
 
     def build_train(self):
         '''
         https://huggingface.co/sentence-transformers/allenai-specter
         '''
+        self.predict_mode = False
         model = SentenceTransformer('sentence-transformers/allenai-specter').to(self.device)
         embeddings = []
         labels = []
-        if os.path.isfile(self.embeddings_file):
-            self.logger.info("Embedings file already exists, loading it directly")
-            self.logger.info(f"Loading {self.embeddings_file}")
-            self.embeddings = np.load(open(self.embeddings_file, 'rb'))
-        elif self.params.force_create:
+        
+        if self.params.force_create:
             self.logger.info("Force create enabled, creating the embeddings from scratch")
             i = 0
             while i < len(self.abstracts):
-                abstracts_batch = [self.abstracts[abstract_id] for abstract_id in list(self.abstracts.keys())[i:min(i+self.params.batch_size, len(self.abstracts)-1)]]
+                abstracts_batch = [self.abstracts[abstract_id] for abstract_id in list(self.abstracts.keys())[i:min(i+self.params.batch_size, len(self.abstracts))]]
                 sentence_level_embeddings = model.encode(abstracts_batch, convert_to_numpy = True, show_progress_bar=False)
                 doc_level_embedding = sentence_level_embeddings
                 embeddings.extend(doc_level_embedding)
                 i += self.params.batch_size
             
-            # for abstract_id in self.abstracts:
-                
-            #     sentence_level_embeddings = model.encode(self.abstracts[abstract_id], convert_to_numpy = True )
-            #     doc_level_embedding = sentence_level_embeddings
-            #     embeddings.append(doc_level_embedding)
             self.embeddings = np.array(embeddings)
             np.save(open(self.embeddings_file, "wb"), self.embeddings)
+        elif os.path.isfile(self.embeddings_file):
+            self.logger.info("Embedings file already exists, loading it directly")
+            self.logger.info(f"Loading {self.embeddings_file}")
+            self.embeddings = np.load(open(self.embeddings_file, 'rb'))
 
         ## Comment créer les labels?
         m = self.G.number_of_edges()
@@ -125,17 +143,43 @@ class SpecterEmbeddings(object):
             X_train[2*i+1] = (n1, n2)
             y_train[2*i+1] = 0
 
-        self.X_train = X_train
-        self.y_train = y_train
-
+        self.X = X_train
+        self.y = y_train    
+        
     def __len__(self):
-        return len(self.y_train)
+        return self.y.shape[0]
 
     def __getitem__(self, idx):
-        emb1 = self.embeddings[self.X_train[idx, 0]]
-        emb2 = self.embeddings[self.X_train[idx, 1]]
+        emb1 = torch.from_numpy(self.embeddings[int(self.X[idx, 0])])
+        emb2 = torch.from_numpy(self.embeddings[int(self.X[idx, 1])])
         concatenated_embeddings = torch.cat((emb1, emb2), dim=0)
-        label = self.y[idx]
-        return concatenated_embeddings, label
+        if not self.predict_mode:
+            label = self.y[idx]
+            return concatenated_embeddings, label
+        return concatenated_embeddings
 
 
+class GraphAutoEncoderDataset(Dataset):
+    def __init__(self, params) -> None:
+        super().__init__()
+
+        self.logger = init_logger("GraphAutoEncoderDataset", "INFO")
+
+        self.logger.info("Loading the Graph object from the edgelist and the embeddings obtained using the abstracts...")
+        path_txt = osp.join(params.root_dataset, 'abstracts.txt')
+        path_edges = osp.join(params.root_dataset, 'edgelist.txt')
+        self.G = nx.read_edgelist(path_edges, delimiter=',', create_using=nx.Graph(), nodetype=int)
+
+        self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        self.params = params
+
+    def build_train(self):
+        self.adj = nx.adjacency_matrix(self.G)
+        self.X = list(self.G.nodes())
+        
+    def __len__(self):
+        return len(self.X)
+
+    def __getitem__(self, idx):
+        x = torch.Tensor(self.X[idx]).long()
+        return x, self.adj

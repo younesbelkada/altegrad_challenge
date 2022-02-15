@@ -22,35 +22,37 @@ class Hparams:
 
     
     wandb_entity  : str  = "altegrad-gnn-link-prediction"         # name of the project
-    test          : bool = True            # test code before running, if testing, no checkpoints are written
-    wandb_project : str  = (f"{'debug-'*test}altegrad")
+    debug         : bool = True            # test code before running, if testing, no checkpoints are written
+    wandb_project : str  = (f"{'test-'*debug}altegrad")
     root_dir      : str  = os.getcwd()  # root_dir
-    log_level       : str             = "INFO" # Log info level https://docs.python.org/3/howto/logging.html 
     seed_everything: Optional[int] = 42   # seed for the whole run
     tune_lr        : bool          = False  # tune the model on first run
     gpu            : int           = 1      # number or gpu
     val_freq       : int           = 1      # validation frequency
-    accumulate_size: int           = 512//64    # gradient accumulation batch size
+    accumulate_size: int           = 1    # gradient accumulation batch size
     max_epochs     : int           = 1000    # maximum number of epochs
     weights_path   : str           = "weights"
-    dev_run        : bool = False
+    dev_run        : bool          = False
+    train          : bool          = False
+    best_model     : str           = "deeply-tulip-125"
 
 @dataclass
 class NetworkParams:
-    network_name   : Optional[str] = "GraphAutoEncoder"     # dataset, use <Dataset>Eval for FT
+    network_name   : Optional[str] = "MLP"     # dataset, use <Dataset>Eval for FT
     weight_checkpoints : str = ""
     artifact : str = ""
-    len_vocab : int = 138499
-    hidden_size : int = 256
+    vocab_size : int = 138499
+    hidden_dim : int = 256
+    embed_dim : int = 768
 
 @dataclass
 class OptimizerParams: 
     """Optimization parameters"""
 
-    optimizer           : str            = "AdamW"  # Optimizer default vit: AdamW, default resnet50: Adam
+    optimizer           : str            = "Adam"  # Optimizer default vit: AdamW, default resnet50: Adam
     lr                  : float          = 3e-4     # learning rate, default = 5e-4
     min_lr              : float          = 5e-6     # min lr reached at the end of the cosine schedule
-    scheduler           : bool           = True
+    scheduler           : bool           = False
 
 @dataclass
 class DatasetParams:
@@ -59,12 +61,13 @@ class DatasetParams:
     """
     dataset_name   : Optional[str] = "SpecterEmbeddings"     # dataset, use <Dataset>Eval for FT
     num_workers       : int         = 20         # number of workers for dataloadersint
-    batch_size        : int         = 2048        # batch_size
+    batch_size        : int         = 256          # batch_size
     split_val         : float       = 0.2
     root_dataset      : Optional[str] = osp.join(os.getcwd(), "input")
-    embeddings_file    : str         = osp.join(os.getcwd(), "input", "embeddings.npy")
-    force_create      : bool        = False
-    dataset_artifact    : str         = 'altegrad-gnn-link-prediction/altegrad/Allenai-SpecterEmbedding:v0'
+    embeddings_file    : str          = osp.join(os.getcwd(), "input", "embeddings.npy")
+    force_create      : bool          = False
+    dataset_artifact    : str         = 'altegrad-gnn-link-prediction/altegrad/Allenai-SpecterEmbedding:v1'
+
 @dataclass
 class Parameters:
     """base options."""
@@ -77,7 +80,7 @@ class Parameters:
         """Post-initialization code"""
         # Mostly used to set some values based on the chosen hyper parameters
         # since we will use different models, backbones and datamodules
-        self.hparams.wandb_project = (f"{'test-'*self.hparams.test}altegrad") 
+        self.hparams.wandb_project = (f"{'test-'*self.hparams.debug}altegrad") 
         
         # Set random seed
         if self.hparams.seed_everything is None:

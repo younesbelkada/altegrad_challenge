@@ -19,7 +19,7 @@ def get_artifact(name: str, type: str) -> str:
     Extracts the artifact from the name by downloading it locally>
     Return : str = path to the artifact        
     """
-    if name != "":
+    if name != "" and name is not None:
         artifact = wandb.run.use_artifact(name, type=type)
         artifact_dir = artifact.download()
         file_path = os.path.join(artifact_dir, os.listdir(artifact_dir)[0])
@@ -40,3 +40,4 @@ def parse_params(parameters: Parameters) -> dict:
     for k,v in vars(parameters).items():
         for key,value in vars(v).items():
             wdb_config[f"{k}-{key}"]=value
+    return wdb_config

@@ -3,6 +3,7 @@ from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 from pytorch_lightning import LightningModule
 from torch.nn import functional as F
 import torch
+import wandb
 
 from utils.agent_utils import get_net
 
@@ -13,18 +14,18 @@ class BaseModule(LightningModule):
         super(BaseModule, self).__init__()
 
         # loss function
-        self.loss = nn.CrossEntropyLoss()
+        self.loss = nn.BCEWithLogitsLoss()
 
+        # optimizer
         self.optim_param = optim_param
         self.lr = optim_param.lr
 
-        # get model
+        # model
         self.model = get_net(network_param.network_name, network_param)
         if network_param.weight_checkpoint is not None:
             self.model.load_state_dict(torch.load(network_param.weight_checkpoint)["state_dict"])
         
     def forward(self, x, Adj = None):
-
         output = self.model(x, Adj)
         return output
 
@@ -45,6 +46,14 @@ class BaseModule(LightningModule):
         self.log("val/loss", loss)
 
         return loss
+
+    def predict_step(self, batch, batch_idx):
+        
+        x = batch
+        output = self(x)
+        output = torch.sigmoid(output)
+
+        return output
 
     def configure_optimizers(self):
         """defines model optimizer"""
