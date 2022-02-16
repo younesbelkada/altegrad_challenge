@@ -1,8 +1,10 @@
 import importlib
-from Dataset.datamodule import BaseDataModule
-from config.hparams import Parameters
 import os
+
 import wandb
+from config.hparams import Parameters
+from Dataset.datamodule import BaseDataModule
+
 
 def get_net(network_name, network_param):
     """

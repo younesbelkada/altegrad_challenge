@@ -1,6 +1,8 @@
-import os
-import wandb
 import argparse
+import os
+
+import wandb
+
 
 def push_artifact(name):
     path_artifact = os.path.join('input', f'{name}')

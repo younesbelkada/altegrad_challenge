@@ -1,20 +1,18 @@
-from pyexpat.errors import XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING
+import logging
 import os
-from random import randint
 import os.path as osp
+from random import randint
 
-import torch
 import networkx as nx
 import numpy as np
-import logging
-from torch.nn.utils.rnn import pad_sequence
+import torch
 from sentence_transformers import SentenceTransformer
-from torch_geometric.utils.convert import from_scipy_sparse_matrix
-
-from utils.logger import init_logger
+from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import Dataset
-
+from torch_geometric.utils.convert import from_scipy_sparse_matrix
 from utils.dataset_utils import get_specter_abstracts_dict
+from utils.logger import init_logger
+
 
 class BaselineGraphDataset(object):
     def __init__(self, params):

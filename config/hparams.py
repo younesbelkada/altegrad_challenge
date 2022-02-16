@@ -3,15 +3,12 @@ import os
 import random
 from dataclasses import dataclass
 from os import path as osp
-import logging
 from typing import Any, ClassVar, Dict, List, Optional
 
-import numpy as np
+import pytorch_lightning as pl
+import simple_parsing
 import torch
 import torch.optim
-import pytorch_lightning as pl
-
-import simple_parsing
 from simple_parsing.helpers import Serializable, choice, dict_field, list_field
 
 ################################## Global parameters ##################################

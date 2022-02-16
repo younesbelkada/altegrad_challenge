@@ -1,16 +1,15 @@
 import os
-from random import randint
 import os.path as osp
+from random import randint
 
-import torch
 import networkx as nx
 import numpy as np
+import torch
 from sentence_transformers import SentenceTransformer
-
-from utils.logger import init_logger
 from torch.utils.data import Dataset
-
 from utils.dataset_utils import get_specter_abstracts_dict
+from utils.logger import init_logger
+
 
 class BaseSentenceEmbeddings(Dataset):
     def __init__(self, params, name_dataset) -> None:
@@ -31,12 +30,29 @@ class BaseSentenceEmbeddings(Dataset):
         self.adj = None
 
     def get_features(self, edg0, edg1):
+        # Graph features
+        # (1, 2) degree of two nodes
+        # (3) sum of degrees of two nodes
+        # (4) absolute value of difference of degrees of two nodes
         deg_edg0 = self.G.degree(edg0)
         deg_edg1 = self.G.degree(edg1)
         edg_sum = deg_edg0 + deg_edg1
         edg_abs = abs(deg_edg0 - deg_edg1)
         
-        return (edg0, edg1, deg_edg0, deg_edg1, edg_sum, edg_abs)
+        # Text features
+        # (1) sum of number of unique terms of the two nodes' abstracts
+        # (2) absolute value of difference of number of unique terms of the two nodes' abstracts
+        # (3) number of common terms between the abstracts of the two nodes
+
+        # Map text to set of terms
+        set_1 = set(self.abstracts[edg0].split())
+        set_2 = set(self.abstracts[edg1].split())
+
+        sum_uni = len(set_1) + len(set_2)
+        abs_uni = abs(len(set_1) - len(set_2))
+        len_com_term = len(set_1.intersection(set_2))
+
+        return (edg0, edg1, deg_edg0, deg_edg1, edg_sum, edg_abs, sum_uni, abs_uni, len_com_term)
 
     def load_embeddings(self):
         '''
@@ -66,6 +82,7 @@ class BaseSentenceEmbeddings(Dataset):
             self.embeddings = np.array(embeddings)
             name_file = osp.join(os.getcwd(), "input", self.params.name_sentence_transformer.split("/")[-1] + ".npy")
             np.save(open(name_file, "wb"), self.embeddings)
+        
         elif os.path.isfile(self.embeddings_file):
             self.logger.info("Embedings file already exists, loading it directly")
             self.logger.info(f"Loading {self.embeddings_file}")
@@ -99,13 +116,13 @@ class BaseSentenceEmbeddings(Dataset):
 
         m = self.G.number_of_edges()
         n = self.G.number_of_nodes()
-        X_train = np.zeros((2*m, 6))
+        X_train = np.zeros((2*m, 9))
         y_train = np.zeros(2*m)
         nodes = list(self.G.nodes())
         
         for i, edge in enumerate(self.G.edges()):
 
-            X_train[2*i] = self.get_features(edge[0],edge[1])
+            X_train[2*i] = self.get_features(edge[0], edge[1])
             y_train[2*i] = 1 
 
             n1 = nodes[randint(0, n-1)]
@@ -115,7 +132,7 @@ class BaseSentenceEmbeddings(Dataset):
                 n1 = nodes[randint(0, n-1)]
                 n2 = nodes[randint(0, n-1)]
 
-            X_train[2*i+1] = self.get_features(n1,n2)
+            X_train[2*i+1] = self.get_features(n1, n2)
             y_train[2*i+1] = 0
 
         self.X = X_train
