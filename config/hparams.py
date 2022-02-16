@@ -40,7 +40,7 @@ class NetworkParams:
     artifact : str = ""
     vocab_size : int = 138499
     hidden_dim : int = 768*2
-    embed_dim : int = (768 * 4) + 4
+    embed_dim : int = (768 * 4) + 7
     heads : int = 4
     dropout : float = 0.2
 
@@ -60,7 +60,7 @@ class DatasetParams:
     """Dataset Parameters
     ! The batch_size and number of crops should be defined here
     """
-    dataset_name           : Optional[str]           = "SentenceEmbeddingsGraphWithNeighbors"     # dataset, use <Dataset>Eval for FT
+    dataset_name           : Optional[str]           = "SentenceEmbeddingsGraphAbstract"     # dataset, use <Dataset>Eval for FT
     num_workers            : int                     = 20         # number of workers for dataloadersint
     batch_size             : int                     = 64         # batch_size
     split_val              : float                   = 0.2
