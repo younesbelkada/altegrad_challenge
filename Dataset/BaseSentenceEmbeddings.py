@@ -1,4 +1,3 @@
-from pyexpat.errors import XML_ERROR_CANT_CHANGE_FEATURE_ONCE_PARSING
 import os
 from random import randint
 import os.path as osp
@@ -6,14 +5,10 @@ import os.path as osp
 import torch
 import networkx as nx
 import numpy as np
-import logging
-from torch.nn.utils.rnn import pad_sequence
 from sentence_transformers import SentenceTransformer
-from torch_geometric.utils.convert import from_scipy_sparse_matrix
 
 from utils.logger import init_logger
 from torch.utils.data import Dataset
-import torch.nn.functional as F
 
 from utils.dataset_utils import get_specter_abstracts_dict
 
@@ -43,37 +38,16 @@ class BaseSentenceEmbeddings(Dataset):
         
         return (edg0, edg1, deg_edg0, deg_edg1, edg_sum, edg_abs)
 
-    def build_predict(self):
-        self.predict_mode = True
-        if os.path.isfile(self.embeddings_file):
-            self.logger.info("Embedings file already exists, loading it directly")
-            self.logger.info(f"Loading {self.embeddings_file}")
-            self.embeddings = np.load(open(self.embeddings_file, 'rb'))
-        else:
-            raise NotImplementedError
-        
-        X = []
-        with open(self.path_predict, 'r') as file:
-            for line in file:
-                line = line.split(',')
-                edg0 = int(line[0])
-                edg1 = int(line[1])
-                X.append(self.get_features(edg0, edg1))
-
-        self.X = np.array(X)
-        self.y = np.zeros(self.X.shape[0])
-
-    def build_train(self):
+    def load_embeddings(self):
         '''
         https://huggingface.co/sentence-transformers/allenai-specter
         https://huggingface.co/sentence-transformers/multi-qa-MiniLM-L6-cos-v1
         https://huggingface.co/sentence-transformers/paraphrase-xlm-r-multilingual-v1
         https://huggingface.co/allenai/scibert_scivocab_uncased
         '''
-        self.predict_mode = False
         
-        if self.params.force_create:
-            self.logger.info("Force create enabled, creating the embeddings from scratch")
+        if self.params.only_create_embeddings:
+            self.logger.info("create embeddings enabled, creating the embeddings from scratch")
             
             self.logger.info(self.params.name_sentence_transformer)
             model = SentenceTransformer(self.params.name_sentence_transformer).to(self.device)
@@ -97,14 +71,40 @@ class BaseSentenceEmbeddings(Dataset):
             self.logger.info(f"Loading {self.embeddings_file}")
             self.embeddings = np.load(open(self.embeddings_file, 'rb'))
 
+    def build_predict(self):
+        
+        self.predict_mode = True
+
+        if os.path.isfile(self.embeddings_file):
+            self.logger.info("Embedings file already exists, loading it directly")
+            self.logger.info(f"Loading {self.embeddings_file}")
+            self.embeddings = np.load(open(self.embeddings_file, 'rb'))
+        else:
+            raise NotImplementedError
+        
+        X = []
+        with open(self.path_predict, 'r') as file:
+            for line in file:
+                line = line.split(',')
+                edg0 = int(line[0])
+                edg1 = int(line[1])
+                X.append(self.get_features(edg0, edg1))
+
+        self.X = np.array(X)
+        self.y = np.zeros(self.X.shape[0])
+
+    def build_train(self):
+        
+        self.predict_mode = False
+
         m = self.G.number_of_edges()
         n = self.G.number_of_nodes()
         X_train = np.zeros((2*m, 6))
         y_train = np.zeros(2*m)
         nodes = list(self.G.nodes())
+        
         for i, edge in enumerate(self.G.edges()):
 
-            
             X_train[2*i] = self.get_features(edge[0],edge[1])
             y_train[2*i] = 1 
 
@@ -120,7 +120,7 @@ class BaseSentenceEmbeddings(Dataset):
 
         self.X = X_train
         self.y = y_train    
-        
+
     def __len__(self):
         return self.y.shape[0]
 

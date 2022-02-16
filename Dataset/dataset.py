@@ -13,7 +13,6 @@ from torch_geometric.utils.convert import from_scipy_sparse_matrix
 
 from utils.logger import init_logger
 from torch.utils.data import Dataset
-import torch.nn.functional as F
 
 from utils.dataset_utils import get_specter_abstracts_dict
 

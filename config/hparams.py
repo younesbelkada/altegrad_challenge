@@ -68,8 +68,7 @@ class DatasetParams:
     batch_size             : int                     = 64         # batch_size
     split_val              : float                   = 0.2
     root_dataset           : Optional[str]           = osp.join(os.getcwd(), "input")
-    embeddings_file        : str                     = osp.join(os.getcwd(), "input", "embeddings_paraphrase.npy")
-    force_create           : bool                    = False
+    # embeddings_file        : str                     = osp.join(os.getcwd(), "input", "embeddings_paraphrase.npy") # useless to remove
     # dataset_artifact    : str = 'altegrad-gnn-link-prediction/altegrad/scibert_scivocab_uncased.npy:v0'
     dataset_artifact    : str = 'altegrad-gnn-link-prediction/altegrad/Allenai-SpecterEmbedding:v1'
     vocab_size             : int                     = 138499

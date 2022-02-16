@@ -1,9 +1,7 @@
 import torch.nn as nn
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 from pytorch_lightning import LightningModule
-from torch.nn import functional as F
 import torch
-import wandb
 
 from utils.agent_utils import get_net
 

@@ -31,7 +31,7 @@ class BaseTrainer:
             self.datamodule = get_datamodule(
                 config.data_param
             )
-            self.datamodule.dataset.build_train()
+            self.datamodule.dataset.load_embeddings()
         else:
             logger.info('Loading artifact...')
             self.load_artifact(config.network_param, config.data_param)
@@ -53,8 +53,8 @@ class BaseTrainer:
             gpus=self.config.gpu,  # use all available GPU's
             max_epochs=self.config.max_epochs,  # number of epochs
             check_val_every_n_epoch=self.config.val_freq,
-            # fast_dev_run=self.config.dev_run,
-            # accumulate_grad_batches=self.config.accumulate_size,
+            fast_dev_run=self.config.dev_run,
+            accumulate_grad_batches=self.config.accumulate_size,
             log_every_n_steps=1,
         )
         trainer.logger = self.wb_run
@@ -71,7 +71,7 @@ class BaseTrainer:
         y_pred = raw_predictions.detach().cpu().numpy()
         predictions = zip(range(len(y_pred)), y_pred)
 
-        with open(f"submissions/{self.config.best_model}'-debug'*{self.config.debug}.csv","w") as pred:
+        with open(f"submissions/{self.config.best_model}{'-debug'*self.config.debug}.csv","w") as pred:
             csv_out = csv.writer(pred)
             csv_out.writerow(['id','predicted'])
             for row in predictions:

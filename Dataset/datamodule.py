@@ -26,6 +26,7 @@ class BaseDataModule(LightningDataModule):
         # Build dataset
         if stage in (None, "fit"):
             # Load dataset
+            self.dataset.load_embeddings()
             self.dataset.build_train()
             val_length = int(len(self.dataset)*self.config.split_val)
             lengths = [len(self.dataset)-val_length, val_length]
