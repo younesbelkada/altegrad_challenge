@@ -62,7 +62,7 @@ class BaseModule(LightningModule):
         
         if self.optim_param.scheduler:
             scheduler = LinearWarmupCosineAnnealingLR(
-                optimizer, warmup_epochs=5, max_epochs=40
+                optimizer, warmup_epochs=self.optim_param.warmup_epochs, max_epochs=self.optim_param.max_epochs
             )
             return [[optimizer], [scheduler]]
 

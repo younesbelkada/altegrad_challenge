@@ -5,7 +5,7 @@ class MLP(nn.Module):
         in_size = params.embed_dim
         hidden_dim = params.hidden_dim
         self.fc = nn.Sequential(
-            nn.Linear(in_size*2, hidden_dim),
+            nn.Linear(in_size, hidden_dim),
             nn.ReLU(), 
             nn.BatchNorm1d(hidden_dim),
             nn.Dropout(params.dropout),
@@ -23,6 +23,14 @@ class MLP(nn.Module):
             nn.Dropout(params.dropout),
             nn.Linear(hidden_dim//4, 1)
         )
+        # self.fc = nn.Sequential(
+        #     nn.Linear(in_size*2, hidden_dim),
+        #     nn.ReLU(), 
+        #     nn.BatchNorm1d(hidden_dim),
+        #     nn.Linear(hidden_dim, hidden_dim),
+        #     nn.BatchNorm1d(hidden_dim),
+        #     nn.Linear(hidden_dim, 1)
+        # )
 
     def forward(self, x):
         out = self.fc(x)

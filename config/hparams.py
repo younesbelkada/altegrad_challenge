@@ -34,7 +34,7 @@ class Hparams:
     weights_path   : str           = "weights"
     dev_run        : bool          = False
     train          : bool          = True
-    best_model     : str           = "hunky-hug-255"
+    best_model     : str           = "sweet-sun-307"
 
 @dataclass
 class NetworkParams:
@@ -43,35 +43,39 @@ class NetworkParams:
     artifact : str = ""
     vocab_size : int = 138499
     hidden_dim : int = 128
-    embed_dim : int = 768 + 2
+    embed_dim : int = (768 * 4) + 4
     heads : int = 4
-    dropout : float = 0.2
+    dropout : float = 0.0
 
 @dataclass
 class OptimizerParams: 
     """Optimization parameters"""
 
-    optimizer           : str            = "Adam"  # Optimizer default vit: AdamW, default resnet50: Adam
-    lr                  : float          = 3e-5     # learning rate, default = 5e-4
-    min_lr              : float          = 5e-6     # min lr reached at the end of the cosine schedule
-    scheduler           : bool           = False
+    optimizer     : str   = "Adam"  # Optimizer default vit: AdamW, default resnet50: Adam
+    lr            : float = 0.00003     # learning rate,               default = 5e-4
+    min_lr        : float = 5e-6     # min lr reached at the end of the cosine schedule
+    scheduler     : bool  = False
+    warmup_epochs : int   = 5
+    max_epochs    : int   = 200
 
 @dataclass
 class DatasetParams:
     """Dataset Parameters
     ! The batch_size and number of crops should be defined here
     """
-    dataset_name   : Optional[str] = "MiniLMEmbeddingsGraph"     # dataset, use <Dataset>Eval for FT
-    num_workers       : int         = 20         # number of workers for dataloadersint
-    batch_size        : int         = 2048          # batch_size
-    split_val         : float       = 0.2
-    root_dataset      : Optional[str] = osp.join(os.getcwd(), "input")
-    embeddings_file    : str          = osp.join(os.getcwd(), "input", "embeddings.npy")
-    force_create      : bool          = False
-    # dataset_artifact    : str         = 'altegrad-gnn-link-prediction/altegrad/Allenai-SpecterEmbedding:v1'
-    dataset_artifact    : str = ''
-    vocab_size : int = 138499
-    only_create_embeddings: bool = True
+    dataset_name           : Optional[str]           = "SentenceEmbeddingsGraphWithNeighbors"     # dataset, use <Dataset>Eval for FT
+    num_workers            : int                     = 20         # number of workers for dataloadersint
+    batch_size             : int                     = 512         # batch_size
+    split_val              : float                   = 0.2
+    root_dataset           : Optional[str]           = osp.join(os.getcwd(), "input")
+    embeddings_file        : str                     = osp.join(os.getcwd(), "input", "embeddings_paraphrase.npy")
+    force_create           : bool                    = False
+    # dataset_artifact    : str = 'altegrad-gnn-link-prediction/altegrad/scibert_scivocab_uncased.npy:v0'
+    dataset_artifact    : str = 'altegrad-gnn-link-prediction/altegrad/Allenai-SpecterEmbedding:v1'
+    # dataset_artifact       : str                     = ''
+    vocab_size             : int                     = 138499
+    only_create_embeddings: bool                     = False
+    name_sentence_transformer : str                  = "allenai/scibert_scivocab_uncased"
 
 @dataclass
 class Parameters:

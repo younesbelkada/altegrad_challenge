@@ -31,6 +31,7 @@ class BaseTrainer:
             self.datamodule = get_datamodule(
                 config.data_param
             )
+            self.datamodule.dataset.build_train()
         else:
             logger.info('Loading artifact...')
             self.load_artifact(config.network_param, config.data_param)
@@ -53,7 +54,7 @@ class BaseTrainer:
             max_epochs=self.config.max_epochs,  # number of epochs
             check_val_every_n_epoch=self.config.val_freq,
             # fast_dev_run=self.config.dev_run,
-            accumulate_grad_batches=self.config.accumulate_size,
+            # accumulate_grad_batches=self.config.accumulate_size,
             log_every_n_steps=1,
         )
         trainer.logger = self.wb_run
