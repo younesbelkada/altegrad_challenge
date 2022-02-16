@@ -71,7 +71,7 @@ class BaseTrainer:
         y_pred = raw_predictions.detach().cpu().numpy()
         predictions = zip(range(len(y_pred)), y_pred)
 
-        with open(f"submissions/{self.config.best_model}.csv","w") as pred:
+        with open(f"submissions/{self.config.best_model}'-debug'*{self.config.debug}.csv","w") as pred:
             csv_out = csv.writer(pred)
             csv_out.writerow(['id','predicted'])
             for row in predictions:

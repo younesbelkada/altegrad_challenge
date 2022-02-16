@@ -15,16 +15,7 @@ from utils.logger import init_logger
 from torch.utils.data import Dataset
 import torch.nn.functional as F
 
-def get_specter_abstracts_dict(path = '/content/CitationPredictionChallenge/Assets/abstracts.txt'):
-    abstracts = dict()
-    with open(path, 'r', encoding="latin-1") as f:
-        for line in f:
-            node, full_abstract = line.split('|--|')
-            abstract_list = full_abstract.split('.')
-            full_abstract = '[SEP]'.join(abstract_list)
-
-            abstracts[int(node)] = full_abstract
-    return abstracts
+from utils.dataset_utils import get_specter_abstracts_dict
 
 class BaselineGraphDataset(object):
     def __init__(self, params):
@@ -252,7 +243,7 @@ class SentenceEmbeddingsGraph(Dataset):
             
             X_train[2*i] = edge[0],edge[1],self.G.degree(edge[0]), self.G.degree(edge[1]), deg1,deg2
             y_train[2*i] = 1 
-
+            
             n1 = nodes[randint(0, n-1)]
             n2 = nodes[randint(0, n-1)]
 
@@ -260,8 +251,8 @@ class SentenceEmbeddingsGraph(Dataset):
             deg2 = abs(self.G.degree(n1) - self.G.degree(n2))
 
 
-            X_train[2*i+1] = n1, n2,self.G.degree(n1), self.G.degree(n2), deg1, deg2
-            y_train[2*i+1] = 0
+            X_train[2*i+1] = n1, n2, self.G.degree(n1), self.G.degree(n2), deg1, deg2
+            y_train[2*i+1] = 0 
         self.X = X_train
         self.y = y_train    
         
@@ -474,15 +465,19 @@ class SentenceEmbeddingsGraphWithNeighbors(Dataset):
                 line = line.split(',')
                 edg0 = int(line[0])
                 edg1 = int(line[1])
-                deg_edg0 = self.G.degree(edg0)
-                deg_edg1 = self.G.degree(edg1)
-                edg_sum = deg_edg0 + deg_edg1
-                edg_abs = abs(deg_edg0 - deg_edg1)
-                X.append((edg0, edg1, deg_edg0, deg_edg1, edg_sum, edg_abs))
+                X.append(self.get_features(edg0,edg1))
 
         self.X = np.array(X)
         self.y = np.zeros(self.X.shape[0])
 
+    def get_features(self, edg0, edg1):
+        deg_edg0 = self.G.degree(edg0)
+        deg_edg1 = self.G.degree(edg1)
+        edg_sum = deg_edg0 + deg_edg1
+        edg_abs = abs(deg_edg0 - deg_edg1)
+        
+        return (edg0, edg1, deg_edg0, deg_edg1, edg_sum, edg_abs)
+        
     def build_train(self):
         '''
         https://huggingface.co/sentence-transformers/allenai-specter
@@ -524,22 +519,21 @@ class SentenceEmbeddingsGraphWithNeighbors(Dataset):
         y_train = np.zeros(2*m)
         nodes = list(self.G.nodes())
         for i, edge in enumerate(self.G.edges()):
+
             
-            deg1 = self.G.degree(edge[0]) + self.G.degree(edge[1])
-            deg2 = abs(self.G.degree(edge[0]) - self.G.degree(edge[1]))
-            
-            X_train[2*i] = edge[0],edge[1],self.G.degree(edge[0]), self.G.degree(edge[1]), deg1,deg2
+            X_train[2*i] = self.get_features(edge[0],edge[1])
             y_train[2*i] = 1 
 
             n1 = nodes[randint(0, n-1)]
             n2 = nodes[randint(0, n-1)]
 
-            deg1 = self.G.degree(n1) + self.G.degree(n2)
-            deg2 = abs(self.G.degree(n1) - self.G.degree(n2))
+            while (n1,n2) in  self.G.edges():
+                n1 = nodes[randint(0, n-1)]
+                n2 = nodes[randint(0, n-1)]
 
-
-            X_train[2*i+1] = n1, n2, self.G.degree(n1), self.G.degree(n2), deg1, deg2
+            X_train[2*i+1] = self.get_features(n1,n2)
             y_train[2*i+1] = 0
+
         self.X = X_train
         self.y = y_train    
         
@@ -558,6 +552,7 @@ class SentenceEmbeddingsGraphWithNeighbors(Dataset):
         neighbors_node1 = list(neighbors_node1)
         neighbors_node2 = list(neighbors_node2)
 
+        
         mean_emb_n1 = torch.mean(torch.cat([torch.from_numpy(self.embeddings[n1]).unsqueeze(0) for n1 in neighbors_node1], dim=0), dim=0)
         mean_emb_n2 = torch.mean(torch.cat([torch.from_numpy(self.embeddings[n2]).unsqueeze(0) for n2 in neighbors_node2], dim=0), dim=0)
         
