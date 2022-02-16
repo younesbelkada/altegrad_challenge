@@ -33,8 +33,8 @@ class Hparams:
     max_epochs     : int           = 1000    # maximum number of epochs
     weights_path   : str           = "weights"
     dev_run        : bool          = False
-    train          : bool          = False
-    best_model     : str           = "attractive-infatuation-244"
+    train          : bool          = True
+    best_model     : str           = "hunky-hug-255"
 
 @dataclass
 class NetworkParams:
@@ -43,8 +43,9 @@ class NetworkParams:
     artifact : str = ""
     vocab_size : int = 138499
     hidden_dim : int = 128
-    embed_dim : int = 768 + 1
+    embed_dim : int = 768 + 2
     heads : int = 4
+    dropout : float = 0.2
 
 @dataclass
 class OptimizerParams: 

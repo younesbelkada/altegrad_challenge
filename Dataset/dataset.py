@@ -196,7 +196,7 @@ class SpecterEmbeddingsGraph(Dataset):
                 line = line.split(',')
                 deg1 = self.G.degree(int(line[0])) + self.G.degree(int(line[1]))
                 deg2 = abs(self.G.degree(int(line[0])) - self.G.degree(int(line[1])))
-                X.append((int(line[0]), int(line[1]), deg1, deg2))
+                X.append((int(line[0]), int(line[1]), self.G.degree(int(line[0])), self.G.degree(int(line[1])), deg1, deg2))
 
         self.X = np.array(X)
         self.y = np.zeros(self.X.shape[0])
@@ -230,7 +230,7 @@ class SpecterEmbeddingsGraph(Dataset):
         ## Comment créer les labels?
         m = self.G.number_of_edges()
         n = self.G.number_of_nodes()
-        X_train = np.zeros((2*m, 4))
+        X_train = np.zeros((2*m, 6))
         y_train = np.zeros(2*m)
         nodes = list(self.G.nodes())
         for i, edge in enumerate(self.G.edges()):
@@ -238,7 +238,7 @@ class SpecterEmbeddingsGraph(Dataset):
             deg1 = self.G.degree(edge[0]) + self.G.degree(edge[1])
             deg2 = abs(self.G.degree(edge[0]) - self.G.degree(edge[1]))
             
-            X_train[2*i] = edge[0],edge[1],deg1,deg2
+            X_train[2*i] = edge[0],edge[1],self.G.degree(edge[0]), self.G.degree(edge[1]), deg1,deg2
             y_train[2*i] = 1 
 
             n1 = nodes[randint(0, n-1)]
@@ -246,9 +246,10 @@ class SpecterEmbeddingsGraph(Dataset):
 
             deg1 = self.G.degree(n1) + self.G.degree(n2)
             deg2 = abs(self.G.degree(n1) - self.G.degree(n2))
-            X_train[2*i+1] = n1, n2,deg1,deg2
-            y_train[2*i+1] = 0
 
+
+            X_train[2*i+1] = n1, n2,self.G.degree(n1), self.G.degree(n2), deg1, deg2
+            y_train[2*i+1] = 0
         self.X = X_train
         self.y = y_train    
         
@@ -259,7 +260,7 @@ class SpecterEmbeddingsGraph(Dataset):
         emb1 = torch.from_numpy(self.embeddings[int(self.X[idx, 0])])
         emb2 = torch.from_numpy(self.embeddings[int(self.X[idx, 1])])
     
-        concatenated_embeddings = torch.cat((emb1, emb2,torch.Tensor([self.X[idx,2],self.X[idx,3]])), dim=0)
+        concatenated_embeddings = torch.cat((emb1, emb2,torch.Tensor([self.X[idx,2],self.X[idx,3], self.X[idx,4],self.X[idx,5]])), dim=0)
 
         if not self.predict_mode:
             label = self.y[idx]

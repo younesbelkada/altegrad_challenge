@@ -8,12 +8,19 @@ class MLP(nn.Module):
             nn.Linear(in_size*2, hidden_dim),
             nn.ReLU(), 
             nn.BatchNorm1d(hidden_dim),
+            nn.Dropout(params.dropout),
             nn.Linear(hidden_dim, hidden_dim),
+            nn.ReLU(),
             nn.BatchNorm1d(hidden_dim),
+            nn.Dropout(params.dropout),
             nn.Linear(hidden_dim, hidden_dim//2),
+            nn.ReLU(),
             nn.BatchNorm1d(hidden_dim//2),
+            nn.Dropout(params.dropout),
             nn.Linear(hidden_dim//2, hidden_dim//4),
+            nn.ReLU(),
             nn.BatchNorm1d(hidden_dim//4),
+            nn.Dropout(params.dropout),
             nn.Linear(hidden_dim//4, 1)
         )
 
