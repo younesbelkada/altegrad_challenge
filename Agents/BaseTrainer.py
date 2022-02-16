@@ -26,18 +26,24 @@ class BaseTrainer:
         
         logger = init_logger("BaseTrainer", "INFO")
 
-        logger.info('Loading artifact...')
-        self.load_artifact(config.network_param, config.data_param)
+        if config.data_param.only_create_embeddings:
+            logger.info('Loading Data module...')
+            self.datamodule = get_datamodule(
+                config.data_param
+            )
+        else:
+            logger.info('Loading artifact...')
+            self.load_artifact(config.network_param, config.data_param)
 
-        logger.info('Loading Data module...')
-        self.datamodule = get_datamodule(
-            config.data_param
-        )
+            logger.info('Loading Data module...')
+            self.datamodule = get_datamodule(
+                config.data_param
+            )
 
-        logger.info('Loading Model module...')
-        self.pl_model = BaseModule(config.network_param, config.optim_param)
-    
-        wandb.watch(self.pl_model.model)
+            logger.info('Loading Model module...')
+            self.pl_model = BaseModule(config.network_param, config.optim_param)
+        
+            wandb.watch(self.pl_model.model)
     
     def run(self):
         trainer = pl.Trainer(

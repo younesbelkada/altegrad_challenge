@@ -60,15 +60,17 @@ class DatasetParams:
     """Dataset Parameters
     ! The batch_size and number of crops should be defined here
     """
-    dataset_name   : Optional[str] = "SpecterEmbeddingsGraph"     # dataset, use <Dataset>Eval for FT
+    dataset_name   : Optional[str] = "MiniLMEmbeddingsGraph"     # dataset, use <Dataset>Eval for FT
     num_workers       : int         = 20         # number of workers for dataloadersint
-    batch_size        : int         = 512          # batch_size
+    batch_size        : int         = 2048          # batch_size
     split_val         : float       = 0.2
     root_dataset      : Optional[str] = osp.join(os.getcwd(), "input")
     embeddings_file    : str          = osp.join(os.getcwd(), "input", "embeddings.npy")
     force_create      : bool          = False
-    dataset_artifact    : str         = 'altegrad-gnn-link-prediction/altegrad/Allenai-SpecterEmbedding:v1'
+    # dataset_artifact    : str         = 'altegrad-gnn-link-prediction/altegrad/Allenai-SpecterEmbedding:v1'
+    dataset_artifact    : str = ''
     vocab_size : int = 138499
+    only_create_embeddings: bool = True
 
 @dataclass
 class Parameters:

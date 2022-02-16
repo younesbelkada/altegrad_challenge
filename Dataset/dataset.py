@@ -167,7 +167,7 @@ class SpecterEmbeddingsGraph(Dataset):
     def __init__(self, params) -> None:
         super().__init__()
 
-        self.logger = init_logger("SpecterEmbeddings", "INFO")
+        self.logger = init_logger("SpecterEmbeddingsGraph", "INFO")
 
         self.logger.info("Loading the Graph object from the edgelist and the embeddings obtained using the abstracts...")
         path_txt = osp.join(params.root_dataset, 'abstracts.txt')
@@ -207,6 +207,109 @@ class SpecterEmbeddingsGraph(Dataset):
         '''
         self.predict_mode = False
         model = SentenceTransformer('sentence-transformers/allenai-specter').to(self.device)
+        embeddings = []
+        labels = []
+        
+        if self.params.force_create:
+            self.logger.info("Force create enabled, creating the embeddings from scratch")
+            i = 0
+            while i < len(self.abstracts):
+                abstracts_batch = [self.abstracts[abstract_id] for abstract_id in list(self.abstracts.keys())[i:min(i+self.params.batch_size, len(self.abstracts))]]
+                sentence_level_embeddings = model.encode(abstracts_batch, convert_to_numpy = True, show_progress_bar=False)
+                doc_level_embedding = sentence_level_embeddings
+                embeddings.extend(doc_level_embedding)
+                i += self.params.batch_size
+            
+            self.embeddings = np.array(embeddings)
+            np.save(open(self.embeddings_file, "wb"), self.embeddings)
+        elif os.path.isfile(self.embeddings_file):
+            self.logger.info("Embedings file already exists, loading it directly")
+            self.logger.info(f"Loading {self.embeddings_file}")
+            self.embeddings = np.load(open(self.embeddings_file, 'rb'))
+
+        ## Comment créer les labels?
+        m = self.G.number_of_edges()
+        n = self.G.number_of_nodes()
+        X_train = np.zeros((2*m, 4))
+        y_train = np.zeros(2*m)
+        nodes = list(self.G.nodes())
+        for i, edge in enumerate(self.G.edges()):
+            
+            deg1 = self.G.degree(edge[0]) + self.G.degree(edge[1])
+            deg2 = abs(self.G.degree(edge[0]) - self.G.degree(edge[1]))
+            
+            X_train[2*i] = edge[0],edge[1],deg1,deg2
+            y_train[2*i] = 1 
+
+            n1 = nodes[randint(0, n-1)]
+            n2 = nodes[randint(0, n-1)]
+
+            deg1 = self.G.degree(n1) + self.G.degree(n2)
+            deg2 = abs(self.G.degree(n1) - self.G.degree(n2))
+            X_train[2*i+1] = n1, n2,deg1,deg2
+            y_train[2*i+1] = 0
+
+        self.X = X_train
+        self.y = y_train    
+        
+    def __len__(self):
+        return self.y.shape[0]
+
+    def __getitem__(self, idx):
+        emb1 = torch.from_numpy(self.embeddings[int(self.X[idx, 0])])
+        emb2 = torch.from_numpy(self.embeddings[int(self.X[idx, 1])])
+    
+        concatenated_embeddings = torch.cat((emb1, emb2,torch.Tensor([self.X[idx,2],self.X[idx,3]])), dim=0)
+
+        if not self.predict_mode:
+            label = self.y[idx]
+            return concatenated_embeddings, label
+        return concatenated_embeddings
+
+class MiniLMEmbeddingsGraph(Dataset):
+    def __init__(self, params) -> None:
+        super().__init__()
+
+        self.logger = init_logger("MiniLMEmbeddingsGraph", "INFO")
+
+        self.logger.info("Loading the Graph object from the edgelist and the embeddings obtained using the abstracts...")
+        path_txt = osp.join(params.root_dataset, 'abstracts.txt')
+        path_edges = osp.join(params.root_dataset, 'edgelist.txt')
+        self.path_predict = osp.join(params.root_dataset, 'test.txt')
+        self.G = nx.read_edgelist(path_edges, delimiter=',', create_using=nx.Graph(), nodetype=int)
+
+        self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+        self.abstracts = get_specter_abstracts_dict(path = path_txt)
+        self.params = params
+        self.embeddings_file = self.params.embeddings_file
+        self.adj = None
+
+    def build_predict(self):
+        self.predict_mode = True
+        if os.path.isfile(self.embeddings_file):
+            self.logger.info("Embedings file already exists, loading it directly")
+            self.logger.info(f"Loading {self.embeddings_file}")
+            self.embeddings = np.load(open(self.embeddings_file, 'rb'))
+        else:
+            raise NotImplementedError
+        
+        X = []
+        with open(self.path_predict, 'r') as file:
+            for line in file:
+                line = line.split(',')
+                deg1 = self.G.degree(int(line[0])) + self.G.degree(int(line[1]))
+                deg2 = abs(self.G.degree(int(line[0])) - self.G.degree(int(line[1])))
+                X.append((int(line[0]), int(line[1]), deg1, deg2))
+
+        self.X = np.array(X)
+        self.y = np.zeros(self.X.shape[0])
+
+    def build_train(self):
+        '''
+        https://huggingface.co/sentence-transformers/multi-qa-MiniLM-L6-cos-v1
+        '''
+        self.predict_mode = False
+        model = SentenceTransformer('sentence-transformers/multi-qa-MiniLM-L6-cos-v1').to(self.device)
         embeddings = []
         labels = []
         
