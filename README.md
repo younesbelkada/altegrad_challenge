@@ -14,3 +14,6 @@ Then,
 ## Useful links
 
 * Get ideas from [here](https://pytorch-lightning.readthedocs.io/en/latest/notebooks/course_UvA-DL/06-graph-neural-networks.html)
+
+# TODO
+Ensemble learning

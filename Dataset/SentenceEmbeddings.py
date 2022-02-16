@@ -133,7 +133,7 @@ class SentenceEmbeddingsGraphWithNeighbors(BaseSentenceEmbeddings):
         
         neighbors_node1 = list(neighbors_node1)
         neighbors_node2 = list(neighbors_node2)
-
+        # Overfit si on met des features avec les voisins, pas les voisins, que voisin train val 
         
         mean_emb_n1 = torch.mean(torch.cat([torch.from_numpy(self.embeddings[n1]).unsqueeze(0) for n1 in neighbors_node1], dim=0), dim=0)
         mean_emb_n2 = torch.mean(torch.cat([torch.from_numpy(self.embeddings[n2]).unsqueeze(0) for n2 in neighbors_node2], dim=0), dim=0)
