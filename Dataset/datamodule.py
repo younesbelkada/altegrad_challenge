@@ -4,13 +4,18 @@ from pytorch_lightning import LightningDataModule
 from torch.utils.data import DataLoader, random_split
 
 from Dataset import dataset
+from Dataset import SentenceEmbeddings
 
 
 
 class BaseDataModule(LightningDataModule):
     def __init__(self, dataset_param):
         super().__init__()
-        data_module = getattr(dataset, dataset_param.dataset_name)
+        if "SentenceEmbeddings" in dataset_param.dataset_name:
+            data_module = getattr(SentenceEmbeddings, dataset_param.dataset_name)
+        else:
+            data_module = getattr(dataset, dataset_param.dataset_name)
+
         self.config = dataset_param
         self.dataset = data_module(dataset_param)
         

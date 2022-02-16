@@ -23,7 +23,7 @@ class Hparams:
     
     wandb_entity  : str  = "altegrad-gnn-link-prediction"         # name of the project
     debug         : bool = True            # test code before running, if testing, no checkpoints are written
-    wandb_project : str  = (f"{'test-'*debug}altegrad")
+    wandb_project : str  = (f"test-altegrad")
     root_dir      : str  = os.getcwd()  # root_dir
     seed_everything: Optional[int] = 42   # seed for the whole run
     tune_lr        : bool          = False  # tune the model on first run
@@ -34,7 +34,7 @@ class Hparams:
     weights_path   : str           = "weights"
     dev_run        : bool          = False
     train          : bool          = True
-    best_model     : str           = "sweet-sun-307"
+    best_model     : str           = "playful-energy-322"
 
 @dataclass
 class NetworkParams:
@@ -42,10 +42,10 @@ class NetworkParams:
     weight_checkpoints : str = ""
     artifact : str = ""
     vocab_size : int = 138499
-    hidden_dim : int = 128
+    hidden_dim : int = 768*2
     embed_dim : int = (768 * 4) + 4
     heads : int = 4
-    dropout : float = 0.0
+    dropout : float = 0.2
 
 @dataclass
 class OptimizerParams: 
@@ -65,14 +65,13 @@ class DatasetParams:
     """
     dataset_name           : Optional[str]           = "SentenceEmbeddingsGraphWithNeighbors"     # dataset, use <Dataset>Eval for FT
     num_workers            : int                     = 20         # number of workers for dataloadersint
-    batch_size             : int                     = 512         # batch_size
+    batch_size             : int                     = 64         # batch_size
     split_val              : float                   = 0.2
     root_dataset           : Optional[str]           = osp.join(os.getcwd(), "input")
     embeddings_file        : str                     = osp.join(os.getcwd(), "input", "embeddings_paraphrase.npy")
     force_create           : bool                    = False
     # dataset_artifact    : str = 'altegrad-gnn-link-prediction/altegrad/scibert_scivocab_uncased.npy:v0'
     dataset_artifact    : str = 'altegrad-gnn-link-prediction/altegrad/Allenai-SpecterEmbedding:v1'
-    # dataset_artifact       : str                     = ''
     vocab_size             : int                     = 138499
     only_create_embeddings: bool                     = False
     name_sentence_transformer : str                  = "allenai/scibert_scivocab_uncased"
@@ -89,7 +88,7 @@ class Parameters:
         """Post-initialization code"""
         # Mostly used to set some values based on the chosen hyper parameters
         # since we will use different models, backbones and datamodules
-        self.hparams.wandb_project = (f"{'test-'*self.hparams.debug}altegrad") 
+        # self.hparams.wandb_project = (f"{'test-'*self.hparams.debug}altegrad") 
         
         # Set random seed
         if self.hparams.seed_everything is None:
