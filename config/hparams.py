@@ -42,7 +42,7 @@ class NetworkParams:
     hidden_dim : int = 768*2
     embed_dim : int = (768 * 4) + 7
     heads : int = 4
-    dropout : float = 0.2
+    dropout : float = 0.0
 
 @dataclass
 class OptimizerParams: 
