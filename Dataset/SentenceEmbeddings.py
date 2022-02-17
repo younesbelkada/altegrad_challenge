@@ -1,4 +1,3 @@
-import os
 from random import randint
 
 import numpy as np
@@ -55,8 +54,8 @@ class SentenceEmbeddingsVanilla(BaseSentenceEmbeddings):
         self.y = y_train    
 
     def __getitem__(self, idx):
-        emb1 = torch.from_numpy(self.embeddings[int(self.X[idx, 0])])
-        emb2 = torch.from_numpy(self.embeddings[int(self.X[idx, 1])])
+        emb1 = torch.from_numpy(self.abstract_embeddings[int(self.X[idx, 0])])
+        emb2 = torch.from_numpy(self.abstract_embeddings[int(self.X[idx, 1])])
         
         concatenated_embeddings = torch.cat((emb1, emb2), dim=0)
 
@@ -71,10 +70,10 @@ class SentenceEmbeddingsGraphAbstract(BaseSentenceEmbeddings):
         super().__init__(params, "SentenceEmbeddingsGraphAbstract")
 
     def __getitem__(self, idx):
-        emb1 = torch.from_numpy(self.embeddings[int(self.X[idx, 0])])
-        emb2 = torch.from_numpy(self.embeddings[int(self.X[idx, 1])])
-
-        concatenated_embeddings = torch.cat((emb1, emb2, torch.Tensor(self.X[idx, 2:])), dim=0)
+        emb1 = torch.from_numpy(self.abstract_embeddings[int(self.X[idx, 0])])
+        emb2 = torch.from_numpy(self.abstract_embeddings[int(self.X[idx, 1])])
+    
+        concatenated_embeddings = torch.cat((emb1, emb2, torch.Tensor([self.X[idx, 2:]])), dim=0)
 
         if not self.predict_mode:
             label = self.y[idx]
@@ -86,9 +85,9 @@ class SentenceEmbeddingsGraphAbstractTwo(BaseSentenceEmbeddings):
     def __init__(self, params) -> None:
         super().__init__(params, "SentenceEmbeddingsGraphAbstractTwo")
 
-    def load_embeddings(self):
-        list_name_em = ['./artifacts/Allenai-SpecterEmbedding:v1/embeddings.npy', 
-                        './artifacts/scibert_scivocab_uncased.npy:v0/scibert_scivocab_uncased.npy']
+    def load_abstract_embeddings(self):
+        list_name_em = ['artifacts/Allenai-SpecterEmbedding:v1/embeddings.npy', 
+                        'artifacts/scibert_scivocab_uncased.npy:v0/scibert_scivocab_uncased.npy']
         self.logger.info("Loading embeddings directly")
 
         self.logger.info(f"Loading {list_name_em}")
@@ -119,8 +118,8 @@ class SentenceEmbeddingsGraphWithNeighbors(BaseSentenceEmbeddings):
     def __getitem__(self, idx):
         current_node1, current_node2 = int(self.X[idx, 0]), int(self.X[idx, 1])
 
-        emb1 = torch.from_numpy(self.embeddings[current_node1])
-        emb2 = torch.from_numpy(self.embeddings[current_node2])
+        emb1 = torch.from_numpy(self.abstract_embeddings[current_node1])
+        emb2 = torch.from_numpy(self.abstract_embeddings[current_node2])
 
         neighbors_node1 = self.G.neighbors(current_node1)
         neighbors_node2 = self.G.neighbors(current_node2)
@@ -129,12 +128,12 @@ class SentenceEmbeddingsGraphWithNeighbors(BaseSentenceEmbeddings):
         neighbors_node2 = list(neighbors_node2)
         
         mean_emb_n1 = torch.zeros(emb1.shape)
-        mean = [torch.from_numpy(self.embeddings[n1]).unsqueeze(0) for n1 in neighbors_node1 if n1 != current_node2]
+        mean = [torch.from_numpy(self.abstract_embeddings[n1]).unsqueeze(0) for n1 in neighbors_node1 if n1 != current_node2]
         if len(mean)>0:
             mean_emb_n1 = torch.mean(torch.cat(mean,dim=0), dim = 0)
 
         mean_emb_n2 = torch.zeros(emb2.shape)
-        mean = [torch.from_numpy(self.embeddings[n2]).unsqueeze(0) for n2 in neighbors_node2 if n2 != current_node1]
+        mean = [torch.from_numpy(self.abstract_embeddings[n2]).unsqueeze(0) for n2 in neighbors_node2 if n2 != current_node1]
         if len(mean)>0:
             mean_emb_n2 = torch.mean(torch.cat(mean,dim=0), dim = 0)
 

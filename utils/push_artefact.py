@@ -18,7 +18,7 @@ def push_artifact(name):
         metadata={
             "emb_dim":768
         },
-        description=f"Embeddings obtained for each abstract using {name}"
+        description=f"Embeddings obtained for each abstract using {name.remove('.npy', '')}"
     )
 
     artifact.add_file(path_artifact)

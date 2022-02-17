@@ -1,12 +1,9 @@
 import pytorch_lightning as pl
-import torch.nn as nn
 import torch
-import torch.optim as optim
 import wandb
 from utils.agent_utils import get_datamodule
 from utils.callbacks import AutoSaveModelCheckpoint
 import csv
-import numpy as np
 
 from Models.BaseModule import BaseModule
 
@@ -26,12 +23,27 @@ class BaseTrainer:
         
         logger = init_logger("BaseTrainer", "INFO")
 
-        if config.data_param.only_create_embeddings:
+        if config.data_param.only_create_abstract_embeddings:
             logger.info('Loading Data module...')
             self.datamodule = get_datamodule(
                 config.data_param
             )
-            self.datamodule.dataset.load_embeddings()
+            self.datamodule.dataset.load_abstract_embeddings()
+
+        elif config.data_param.only_create_keywords_embeddings:
+            logger.info('Loading Data module...')
+            self.datamodule = get_datamodule(
+                config.data_param
+            )
+            self.datamodule.dataset.load_keywords_embeddings()
+
+        elif config.data_param.only_create_keywords:
+            logger.info('Loading Data module...')
+            self.datamodule = get_datamodule(
+                config.data_param
+            )
+            self.datamodule.dataset.load_keywords()
+        
         else:
             logger.info('Loading artifact...')
             self.load_artifact(config.network_param, config.data_param)
@@ -77,10 +89,12 @@ class BaseTrainer:
             for row in predictions:
                 csv_out.writerow(row)
 
-    def load_artifact(self,network_param,data_param):
-        network_param.weight_checkpoint = get_artifact(network_param.artifact, type="model")
-        data_param.embeddings_file      = get_artifact(data_param.dataset_artifact, type="dataset")
-        
+    def load_artifact(self,network_param, data_param):
+        network_param.weight_checkpoint     = get_artifact(network_param.artifact, type="model")
+        data_param.abstract_embeddings_file = get_artifact(data_param.abstract_embeddings_artifact, type="dataset")
+        data_param.keywords_embeddings_file = get_artifact(data_param.keywords_embeddings_file, type="dataset")
+        data_param.keywords_file            = get_artifact(data_param.keywords_artifact, type="dataset")
+
     def get_callbacks(self):
         callbacks = [RichProgressBar(), LearningRateMonitor()]
         monitor = "val/loss"
