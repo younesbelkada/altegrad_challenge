@@ -1,4 +1,4 @@
-def get_specter_abstracts_dict(path = '/content/CitationPredictionChallenge/Assets/abstracts.txt'):
+def get_abstracts_dict(path = '/content/CitationPredictionChallenge/Assets/abstracts.txt'):
     abstracts = dict()
     with open(path, 'r', encoding="latin-1") as f:
         for line in f:

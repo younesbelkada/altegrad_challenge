@@ -10,7 +10,7 @@ from sentence_transformers import SentenceTransformer
 from torch.nn.utils.rnn import pad_sequence
 from torch.utils.data import Dataset
 from torch_geometric.utils.convert import from_scipy_sparse_matrix
-from utils.dataset_utils import get_specter_abstracts_dict
+from utils.dataset_utils import get_abstracts_dict
 from utils.logger import init_logger
 
 
@@ -229,7 +229,7 @@ class SubGraphsDatasetWithoutAdj(Dataset):
         self.path_predict = osp.join(params.root_dataset, 'test.txt')
         self.G = nx.read_edgelist(path_edges, delimiter=',', create_using=nx.Graph(), nodetype=int)
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-        self.abstracts = get_specter_abstracts_dict(path = path_txt)
+        self.abstracts = get_abstracts_dict(path = path_txt)
         self.params = params
         self.embeddings_file = self.params.embeddings_file
         self.adj = None

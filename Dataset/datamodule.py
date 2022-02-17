@@ -33,6 +33,7 @@ class BaseDataModule(LightningDataModule):
             self.train_dataset, self.val_dataset = random_split(self.dataset, lengths)
 
         if stage == "predict":
+            self.dataset.load_embeddings()
             self.dataset.build_predict()
 
     def train_dataloader(self):

@@ -55,8 +55,8 @@ class BaseModule(LightningModule):
 
     def configure_optimizers(self):
         """defines model optimizer"""
-        optimizer = getattr(torch.optim,self.optim_param.optimizer)
-        optimizer = optimizer(self.parameters(), lr=self.optim_param.lr)
+        optimizer = getattr(torch.optim, self.optim_param.optimizer)
+        optimizer = optimizer(self.parameters(), lr=self.optim_param.lr, weight_decay=self.optim_param.weight_decay)
         
         if self.optim_param.scheduler:
             scheduler = LinearWarmupCosineAnnealingLR(

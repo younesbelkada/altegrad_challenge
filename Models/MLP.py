@@ -1,5 +1,6 @@
 import torch.nn as nn
 
+# FIXME le MLP fait overfit trop vite (j'ai testé avec les embeddings tout seul ça overfit def water)
 class MLP(nn.Module):
     def __init__(self, params) -> None:
         super().__init__()
@@ -26,10 +27,11 @@ class MLP(nn.Module):
             nn.Linear(hidden_dim//4, 1)
         )
         # self.fc = nn.Sequential(
-        #     nn.Linear(in_size*2, hidden_dim),
+        #     nn.Linear(in_size, hidden_dim),
         #     nn.ReLU(), 
         #     self.norm(hidden_dim),
         #     nn.Linear(hidden_dim, hidden_dim),
+        #     nn.ReLU(),
         #     self.norm(hidden_dim),
         #     nn.Linear(hidden_dim, 1)
         # )

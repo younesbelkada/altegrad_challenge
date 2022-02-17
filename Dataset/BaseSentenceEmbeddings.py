@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from sentence_transformers import SentenceTransformer
 from torch.utils.data import Dataset
-from utils.dataset_utils import get_specter_abstracts_dict
+from utils.dataset_utils import get_abstracts_dict
 from utils.logger import init_logger
 
 
@@ -24,12 +24,14 @@ class BaseSentenceEmbeddings(Dataset):
         self.G = nx.read_edgelist(path_edges, delimiter=',', create_using=nx.Graph(), nodetype=int)
 
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-        self.abstracts = get_specter_abstracts_dict(path = path_txt)
+        self.abstracts = get_abstracts_dict(path = path_txt)
         self.params = params
         self.embeddings_file = self.params.embeddings_file
         self.adj = None
 
     def get_features(self, edg0, edg1):
+
+        list_features = [edg0, edg1]
         # Graph features
         # (1, 2) degree of two nodes
         # (3) sum of degrees of two nodes
@@ -39,11 +41,18 @@ class BaseSentenceEmbeddings(Dataset):
         edg_sum = deg_edg0 + deg_edg1
         edg_abs = abs(deg_edg0 - deg_edg1)
         
+        list_features.append(deg_edg0)
+        list_features.append(deg_edg1)
+        list_features.append(edg_sum)
+        list_features.append(edg_abs)
+
         # Text features
         # (1) sum of number of unique terms of the two nodes' abstracts
         # (2) absolute value of difference of number of unique terms of the two nodes' abstracts
         # (3) number of common terms between the abstracts of the two nodes
-
+        
+        # TODO for each nodes detect keywords then intersection between two set of keywords 
+        
         # Map text to set of terms
         set_1 = set(self.abstracts[edg0].split())
         set_2 = set(self.abstracts[edg1].split())
@@ -51,8 +60,13 @@ class BaseSentenceEmbeddings(Dataset):
         sum_uni = len(set_1) + len(set_2)
         abs_uni = abs(len(set_1) - len(set_2))
         len_com_term = len(set_1.intersection(set_2))
+        
+        list_features.append(sum_uni)
+        list_features.append(abs_uni)
+        list_features.append(len_com_term)
 
-        return (edg0, edg1, deg_edg0, deg_edg1, edg_sum, edg_abs, sum_uni, abs_uni, len_com_term)
+        return tuple(list_features)
+
 
     def load_embeddings(self):
         '''
@@ -90,14 +104,9 @@ class BaseSentenceEmbeddings(Dataset):
 
     def build_predict(self):
         
-        self.predict_mode = True
+        self.logger.info("Building predict ...")
 
-        if os.path.isfile(self.embeddings_file):
-            self.logger.info("Embedings file already exists, loading it directly")
-            self.logger.info(f"Loading {self.embeddings_file}")
-            self.embeddings = np.load(open(self.embeddings_file, 'rb'))
-        else:
-            raise NotImplementedError
+        self.predict_mode = True
         
         X = []
         with open(self.path_predict, 'r') as file:
@@ -107,11 +116,16 @@ class BaseSentenceEmbeddings(Dataset):
                 edg1 = int(line[1])
                 X.append(self.get_features(edg0, edg1))
 
-        self.X = np.array(X)
+        
+        X = np.array(X)
+        X[:,2:] = (X[:,2:] - X[:,2:].min(0))/X[:,2:].ptp(0)
+        self.X = X
         self.y = np.zeros(self.X.shape[0])
 
     def build_train(self):
         
+        self.logger.info("Building train ...")
+
         self.predict_mode = False
 
         m = self.G.number_of_edges()
@@ -125,16 +139,20 @@ class BaseSentenceEmbeddings(Dataset):
             X_train[2*i] = self.get_features(edge[0], edge[1])
             y_train[2*i] = 1 
 
-            n1 = nodes[randint(0, n-1)]
+            n1 = nodes[randint(0, n-1)] 
             n2 = nodes[randint(0, n-1)]
-
-            while (n1,n2) in  self.G.edges():
+            # FIXME can create pairs of the test set
+            while (n1, n2) in self.G.edges():
                 n1 = nodes[randint(0, n-1)]
                 n2 = nodes[randint(0, n-1)]
 
             X_train[2*i+1] = self.get_features(n1, n2)
             y_train[2*i+1] = 0
 
+        self.logger.info("Finished building train ...")
+
+        # normalize the last columns
+        X_train[:,2:] = (X_train[:,2:] - X_train[:,2:].min(0))/X_train[:,2:].ptp(0)
         self.X = X_train
         self.y = y_train    
 

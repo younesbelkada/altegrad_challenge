@@ -19,10 +19,10 @@ class Hparams:
 
     
     wandb_entity  : str  = "altegrad-gnn-link-prediction"         # name of the project
-    debug         : bool = True            # test code before running, if testing, no checkpoints are written
+    debug         : bool = False            # test code before running, if testing, no checkpoints are written
     wandb_project : str  = (f"test-altegrad")
     root_dir      : str  = os.getcwd()  # root_dir
-    seed_everything: Optional[int] = 42   # seed for the whole run
+    seed_everything: Optional[int] = None   # seed for the whole run
     tune_lr        : bool          = False  # tune the model on first run
     gpu            : int           = 1      # number or gpu
     val_freq       : int           = 1      # validation frequency
@@ -31,7 +31,7 @@ class Hparams:
     weights_path   : str           = "weights"
     dev_run        : bool          = False
     train          : bool          = True
-    best_model     : str           = "playful-energy-322"
+    best_model     : str           = "clear-water-350"
 
 @dataclass
 class NetworkParams:
@@ -39,10 +39,10 @@ class NetworkParams:
     weight_checkpoints : str = ""
     artifact : str = ""
     vocab_size : int = 138499
-    hidden_dim : int = 768*2
-    embed_dim : int = (768 * 4) + 7
+    hidden_dim : int = 768  
+    embed_dim : int = (768 * 2) + 7
     heads : int = 4
-    dropout : float = 0.0
+    dropout : float = 0.5
 
 @dataclass
 class OptimizerParams: 
@@ -51,6 +51,7 @@ class OptimizerParams:
     optimizer     : str   = "Adam"  # Optimizer default vit: AdamW, default resnet50: Adam
     lr            : float = 0.00003     # learning rate,               default = 5e-4
     min_lr        : float = 5e-6     # min lr reached at the end of the cosine schedule
+    weight_decay  : float = 0.02
     scheduler     : bool  = False
     warmup_epochs : int   = 5
     max_epochs    : int   = 200
