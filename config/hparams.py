@@ -60,17 +60,21 @@ class DatasetParams:
     """Dataset Parameters
     ! The batch_size and number of crops should be defined here
     """
-    dataset_name           : Optional[str]           = "SentenceEmbeddingsGraphAbstract"     # dataset, use <Dataset>Eval for FT
-    num_workers            : int                     = 20         # number of workers for dataloadersint
-    batch_size             : int                     = 2048         # batch_size
-    split_val              : float                   = 0.2
-    root_dataset           : Optional[str]           = osp.join(os.getcwd(), "input")
-    # embeddings_file        : str                     = osp.join(os.getcwd(), "input", "embeddings_paraphrase.npy") # useless to remove
-    # dataset_artifact    : str = 'altegrad-gnn-link-prediction/altegrad/scibert_scivocab_uncased.npy:v0'
-    dataset_artifact    : str = 'altegrad-gnn-link-prediction/altegrad/Allenai-SpecterEmbedding:v1'
-    vocab_size             : int                     = 138499
-    only_create_embeddings: bool                     = False
-    name_sentence_transformer : str                  = "allenai/scibert_scivocab_uncased"
+    dataset_name            : Optional[str]           = "SentenceEmbeddingsGraphAbstract"     # dataset, use <Dataset>Eval for FT
+    num_workers             : int                     = 20         # number of workers for dataloadersint
+    batch_size              : int                     = 2048         # batch_size
+    split_val               : float                   = 0.2
+    root_dataset            : Optional[str]           = osp.join(os.getcwd(), "input")
+    vocab_size              : int                     = 138499
+
+    abstract_embeddings_artifact     : str = 'altegrad-gnn-link-prediction/altegrad/Allenai-SpecterEmbedding:v1'
+    keywords_embeddings_artifact     : str = ''
+    keywords_artifact                : str = ''
+    name_transformer                 : str = "allenai/scibert_scivocab_uncased"
+    only_create_abstract_embeddings  : bool = False
+    only_create_keywords_embeddings  : bool = False
+    only_create_keywords             : bool = False
+    nb_keywords                      : int = 10
 
 @dataclass
 class Parameters:
