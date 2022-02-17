@@ -12,13 +12,14 @@ def push_artifact(name):
         project="altegrad"
     )
 
+    name = name.replace('_', '-')
     artifact = wandb.Artifact(
         name=name,
         type="dataset",
         metadata={
             "emb_dim":768
         },
-        description=f"Embeddings obtained for each abstract using {name.remove('.npy', '')}"
+        description=f"Embeddings obtained from the top 10 keywords for each abstract using {name.replace('.npy', '')}"
     )
 
     artifact.add_file(path_artifact)

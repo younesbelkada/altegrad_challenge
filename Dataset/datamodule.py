@@ -25,8 +25,7 @@ class BaseDataModule(LightningDataModule):
         if stage in (None, "fit"):
             # Load dataset
             self.dataset.load_abstract_embeddings()
-            # self.dataset.load_keywords_embeddings()
-            # self.dataset.load_keywords()
+            self.dataset.load_keywords()
             self.dataset.build_train()
             val_length = int(len(self.dataset)*self.config.split_val)
             lengths = [len(self.dataset)-val_length, val_length]
@@ -34,8 +33,7 @@ class BaseDataModule(LightningDataModule):
 
         if stage == "predict":
             self.dataset.load_abstract_embeddings()
-            # self.dataset.load_keywords_embeddings()
-            # self.dataset.load_keywords()
+            self.dataset.load_keywords()
             self.dataset.build_predict()
 
     def train_dataloader(self):

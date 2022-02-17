@@ -19,8 +19,8 @@ class Hparams:
 
     
     wandb_entity  : str  = "altegrad-gnn-link-prediction"         # name of the project
-    debug         : bool = False            # test code before running, if testing, no checkpoints are written
-    wandb_project : str  = (f"test-altegrad")
+    debug         : bool = True            # test code before running, if testing, no checkpoints are written
+    wandb_project : str  = f"{'test-'*debug}altegrad"
     root_dir      : str  = os.getcwd()  # root_dir
     seed_everything: Optional[int] = None   # seed for the whole run
     tune_lr        : bool          = False  # tune the model on first run
@@ -39,10 +39,11 @@ class NetworkParams:
     weight_checkpoints : str = ""
     artifact : str = ""
     vocab_size : int = 138499
-    hidden_dim : int = 768  
-    embed_dim : int = (768 * 2) + 7
-    heads : int = 4
-    dropout : float = 0.5
+    input_size : int = (768 * 2) + 4 + (768*20)
+
+    dropout         : float = 0.0
+    normalization   : str   = 'LayerNorm' # BatchNorm1d
+    activation      : str   = 'ReLU'
 
 @dataclass
 class OptimizerParams: 
@@ -51,7 +52,7 @@ class OptimizerParams:
     optimizer     : str   = "Adam"  # Optimizer default vit: AdamW, default resnet50: Adam
     lr            : float = 0.00003     # learning rate,               default = 5e-4
     min_lr        : float = 5e-6     # min lr reached at the end of the cosine schedule
-    weight_decay  : float = 0.02
+    weight_decay  : float = 0.00
     scheduler     : bool  = False
     warmup_epochs : int   = 5
     max_epochs    : int   = 200
@@ -63,17 +64,16 @@ class DatasetParams:
     """
     dataset_name            : Optional[str]           = "SentenceEmbeddingsGraphAbstract"     # dataset, use <Dataset>Eval for FT
     num_workers             : int                     = 20         # number of workers for dataloadersint
-    batch_size              : int                     = 2048         # batch_size
+    batch_size              : int                     = 2048       # batch_size
     split_val               : float                   = 0.2
     root_dataset            : Optional[str]           = osp.join(os.getcwd(), "input")
     vocab_size              : int                     = 138499
 
     abstract_embeddings_artifact     : str = 'altegrad-gnn-link-prediction/altegrad/Allenai-SpecterEmbedding:v1'
-    keywords_embeddings_artifact     : str = ''
-    keywords_artifact                : str = ''
-    name_transformer                 : str = "allenai/scibert_scivocab_uncased"
+    keywords_embeddings_artifact     : str = 'altegrad-gnn-link-prediction/altegrad/keywords-emb-10-sentence-transformers-allenai-specter.npy:v0'
+    keywords_artifact                : str = 'altegrad-gnn-link-prediction/altegrad/keywords-10-sentence-transformers-allenai-specter.npy:v0'
+    name_transformer                 : str = 'sentence-transformers/allenai-specter'
     only_create_abstract_embeddings  : bool = False
-    only_create_keywords_embeddings  : bool = False
     only_create_keywords             : bool = False
     nb_keywords                      : int = 10
 

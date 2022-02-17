@@ -2,6 +2,7 @@ from random import randint
 
 import numpy as np
 import torch
+import random
 
 from Dataset.BaseSentenceEmbeddings import BaseSentenceEmbeddings
 
@@ -70,14 +71,23 @@ class SentenceEmbeddingsGraphAbstract(BaseSentenceEmbeddings):
         super().__init__(params, "SentenceEmbeddingsGraphAbstract")
 
     def __getitem__(self, idx):
-        emb1 = torch.from_numpy(self.abstract_embeddings[int(self.X[idx, 0])])
-        emb2 = torch.from_numpy(self.abstract_embeddings[int(self.X[idx, 1])])
-    
-        concatenated_embeddings = torch.cat((emb1, emb2, torch.Tensor([self.X[idx, 2:]])), dim=0)
+
+        pos1 = random.randint(0, 1)
+        pos2 = 1-pos1
+
+        emb1 = torch.from_numpy(self.abstract_embeddings[int(self.X[idx, pos1])])
+        emb2 = torch.from_numpy(self.abstract_embeddings[int(self.X[idx, pos2])])
+
+        keyword_feat1 = torch.from_numpy(self.keywords_embeddings[pos1]).flatten()
+        keyword_feat2 = torch.from_numpy(self.keywords_embeddings[pos2]).flatten()
+
+        concatenated_embeddings = torch.cat((keyword_feat1, emb1, keyword_feat2, emb2, torch.Tensor(self.X[idx, 2:])), dim=0)
 
         if not self.predict_mode:
             label = self.y[idx]
             return concatenated_embeddings, label
+        
+        
         return concatenated_embeddings
 
 

@@ -5,12 +5,12 @@ from random import randint
 import networkx as nx
 import numpy as np
 import torch
+from tqdm import tqdm
 from sentence_transformers import SentenceTransformer
 from torch.utils.data import Dataset
 from utils.dataset_utils import get_abstracts_dict
 from utils.logger import init_logger
-from wordwise import Extractor
-from summa import keywords
+from keybert import KeyBERT
 
 class BaseSentenceEmbeddings(Dataset):
     def __init__(self, params, name_dataset) -> None:
@@ -56,27 +56,35 @@ class BaseSentenceEmbeddings(Dataset):
         # (3) number of common terms between the abstracts of the two nodes
 
         # Map text to set of terms
-        set_1 = set(self.abstracts[edg0].split())
-        set_2 = set(self.abstracts[edg1].split())
+        # set_1 = set(self.abstracts[edg0].split()) # slow
+        # set_2 = set(self.abstracts[edg1].split()) # slow
 
-        sum_uni = len(set_1) + len(set_2)
-        abs_uni = abs(len(set_1) - len(set_2))
-        len_com_term = len(set_1.intersection(set_2))
+        # sum_uni = len(set_1) + len(set_2)
+        # abs_uni = abs(len(set_1) - len(set_2))
+        # len_com_term = len(set_1.intersection(set_2))
         
-        list_features.append(sum_uni)
-        list_features.append(abs_uni)
-        list_features.append(len_com_term)
+        # list_features.append(sum_uni)
+        # list_features.append(abs_uni)
+        # list_features.append(len_com_term)
         
         # (4, 5) keywords length and intersection
-        set_key_1 = set(self.keywords[edg0])
-        set_key_2 = set(self.keywords[edg1])
+        # set_key_1 = set(self.keywords[edg0]) 
+        # set_key_2 = set(self.keywords[edg1]) 
 
-        len_keywords = len(set_key_1)
-        len_com_keywords = len(set_key_1.intersection(set_key_2))
+        # len_keywords = len(set_key_1)
+        # len_com_keywords = len(set_key_1.intersection(set_key_2))
         
-        list_features.append(len_keywords)
-        list_features.append(len_com_keywords)
+        # list_features.append(len_keywords)
+        # list_features.append(len_com_keywords)
         
+        # Keywords features 
+
+        # keyword_feat1 = self.keywords_embeddings[edg0]
+        # keyword_feat2 = self.keywords_embeddings[edg1]
+
+        # list_features.append(keyword_feat1)
+        # list_features.append(keyword_feat2)
+
         return tuple(list_features)
 
     def load_keywords(self):
@@ -86,76 +94,54 @@ class BaseSentenceEmbeddings(Dataset):
 
             self.logger.info(self.params.name_transformer)
 
-            keywords = []
+            keywords_array = []
+            keywords_embed = []
 
-            # method 1: leverage BERT features https://jaketae.github.io/study/keyword-extraction/
-            # https://github.com/jaketae/wordwise/blob/master/wordwise/core.py
+            self.logger.info(f"batch size: {self.params.batch_size}")
 
-            extractor = Extractor(        
-                n_gram_range=(1, 1),
-                spacy_model="en_core_web_sm",
-                # bert_model="sentence-transformers/all-MiniLM-L12-v2", # by default (change?)
-                bert_model=self.params.name_transformer,
-                device=self.device
-                )
+            i = 0
+            model = SentenceTransformer(self.params.name_transformer).to(self.device)
+            kw_model = KeyBERT(model=model)
+            
+            while i < len(self.abstracts):
+                abstracts_batch = [self.abstracts[abstract_id] for abstract_id in list(self.abstracts.keys())[i:min(i+self.params.batch_size, len(self.abstracts))]]
+                keywords_batch = kw_model.extract_keywords(abstracts_batch, 
+                                                    keyphrase_ngram_range=(1, 2),
+                                                    use_maxsum=True, 
+                                                    top_n=self.nb_keywords,
+                                                    stop_words='english')
 
-            for abstract_id in list(self.abstracts.keys()):
-                keywords.append(extractor.generate(self.abstracts[abstract_id], self.nb_keywords))
+                converted_keywords_batch = [[b[0] for b in batch] if len(batch) == self.nb_keywords else ['N' for _ in range(self.nb_keywords)] for batch in keywords_batch]
+                converted_keywords_batch = np.array(converted_keywords_batch).flatten()
+                keywords_embeddings = model.encode(converted_keywords_batch, convert_to_numpy = True, show_progress_bar=False)
+                keywords_embed.extend(keywords_embeddings.reshape(len(keywords_batch), self.nb_keywords, keywords_embeddings.shape[1]))
+                keywords_array.extend(keywords_batch)
+                i += self.params.batch_size
 
-            self.keywords = np.array(keywords)
-            name_file = osp.join(os.getcwd(), "input", f"keywords-{self.nb_keywords}-{self.params.name_transformer.replace('/', '_')}.npy")
-            np.save(open(name_file, "wb"), self.keywords)
+            self.keywords = np.array(keywords_array)
+            self.keywords_embed = np.array(keywords_embed)
+            raw_keywords_name_file = osp.join(os.getcwd(), "input", f"keywords-{self.nb_keywords}-{self.params.name_transformer.replace('/', '_')}.npy")
+            emb_keywords_name_file = osp.join(os.getcwd(), "input", f"keywords_emb-{self.nb_keywords}-{self.params.name_transformer.replace('/', '_')}.npy")
             
-            # method 2: Text Rank https://medium.com/mlearning-ai/10-popular-keyword-extraction-algorithms-in-natural-language-processing-8975ada5750c
-            # https://github.com/summanlp/textrank
+            np.save(open(raw_keywords_name_file, "wb"), self.keywords)
+            self.logger.info(f"{raw_keywords_name_file} created")
             
-            # for abstract_id in list(self.abstracts.keys()):
-            #     keywords.append(keywords.keywords(self.abstracts[abstract_id], words=self.nb_keywords))
+            np.save(open(emb_keywords_name_file, "wb"), self.keywords_embed)
+            self.logger.info(f"{emb_keywords_name_file} created")
+
+        elif os.path.isfile(self.keywords_file) and os.path.isfile(self.keywords_embeddings_file):
             
-            # self.keywords = np.array(keywords)
-            # name_file = osp.join(os.getcwd(), "input", f"keywords-{self.nb_keywords}-textrank.npy")
-            # np.save(open(name_file, "wb"), self.keywords)
-            
-        elif os.path.isfile(self.keywords_file):
             self.logger.info("Keywords file already exists, loading it directly")
             self.logger.info(f"Loading {self.keywords_file}")
-            self.keywords = np.load(open(self.keywords_file, 'rb'))
-
-    def load_keywords_embeddings(self):
-        '''
-        # TODO
-        '''
-        
-        # if self.params.only_create_keywords_embeddings:
-        #     self.logger.info("create keywords embeddings enabled, creating the keywords embeddings from scratch")
+            self.keywords = np.load(open(self.keywords_file, 'rb'), allow_pickle=True)
             
-        #     self.logger.info(self.params.name_transformer)
-        #     model = SentenceTransformer(self.params.name_transformer).to(self.device)
-        #     keywords_embeddings = []
-            
-        #     self.logger.info(f"batch size: {self.params.batch_size}")
-
-        #     i = 0
-        #     while i < len(self.abstracts):
-        #         abstracts_batch = [self.abstracts[abstract_id] for abstract_id in list(self.abstracts.keys())[i:min(i+self.params.batch_size, len(self.abstracts))]]
-        #         sentence_level_embeddings = model.encode(abstracts_batch, convert_to_numpy = True, show_progress_bar=False)
-        #         keywords_embeddings.extend(doc_level_embedding)
-        #         i += self.params.batch_size
-            
-        #     self.keywords_embeddings = np.array(keywords_embeddings)
-        #     name_file = osp.join(os.getcwd(), "input", f"keywords_embeddings-{self.nb_keywords}-{self.params.name_transformer.replace('/', '_')}.npy")
-        #     np.save(open(name_file, "wb"), self.keywords_embeddings)
-        
-        # elif os.path.isfile(self.keywords_embeddings_file):
-        #     self.logger.info("Embedings file already exists, loading it directly")
-        #     self.logger.info(f"Loading {self.keywords_embeddings_file}")
-        #     self.keywords_embeddings = np.load(open(self.keywords_embeddings_file, 'rb'))
+            self.logger.info("Keywords embeddings file already exists, loading it directly")
+            self.logger.info(f"Loading {self.keywords_embeddings_file}")
+            self.keywords_embeddings = np.load(open(self.keywords_embeddings_file, 'rb'))
 
     def load_abstract_embeddings(self):
         '''
         https://huggingface.co/sentence-transformers/allenai-specter
-        https://huggingface.co/sentence-transformers/multi-qa-MiniLM-L6-cos-v1
-        https://huggingface.co/sentence-transformers/paraphrase-xlm-r-multilingual-v1
         https://huggingface.co/allenai/scibert_scivocab_uncased
         '''
         
@@ -171,7 +157,7 @@ class BaseSentenceEmbeddings(Dataset):
             i = 0
             while i < len(self.abstracts):
                 abstracts_batch = [self.abstracts[abstract_id] for abstract_id in list(self.abstracts.keys())[i:min(i+self.params.batch_size, len(self.abstracts))]]
-                abstract_level_embeddings = model.encode(abstracts_batch, convert_to_numpy = True, show_progress_bar=False) # FIXME encode que par rapport aux abstract du batch ? 
+                abstract_level_embeddings = model.encode(abstracts_batch, convert_to_numpy = True, show_progress_bar=False)
                 abstract_embeddings.extend(abstract_level_embeddings)
                 i += self.params.batch_size
             
@@ -199,7 +185,6 @@ class BaseSentenceEmbeddings(Dataset):
                 X.append(self.get_features(edg0, edg1))
 
         X = np.array(X)
-        X[:,2:] = (X[:,2:] - X[:,2:].min(0))/X[:,2:].ptp(0)
         self.X = X
         self.y = np.zeros(self.X.shape[0])
 
@@ -211,8 +196,9 @@ class BaseSentenceEmbeddings(Dataset):
 
         m = self.G.number_of_edges()
         n = self.G.number_of_nodes()
-        X_train = np.zeros((2*m, 9))
+        X_train = np.zeros((2*m, 6))
         y_train = np.zeros(2*m)
+
         nodes = list(self.G.nodes())
         
         for i, edge in enumerate(self.G.edges()):
@@ -222,7 +208,8 @@ class BaseSentenceEmbeddings(Dataset):
 
             n1 = nodes[randint(0, n-1)] 
             n2 = nodes[randint(0, n-1)]
-            # FIXME can create pairs of the test set
+
+            # FIXME can create pairs of the test set try without negative pairs
             while (n1, n2) in self.G.edges():
                 n1 = nodes[randint(0, n-1)]
                 n2 = nodes[randint(0, n-1)]
@@ -232,8 +219,6 @@ class BaseSentenceEmbeddings(Dataset):
 
         self.logger.info("Finished building train ...")
 
-        # normalize the last columns
-        X_train[:,2:] = (X_train[:,2:] - X_train[:,2:].min(0))/X_train[:,2:].ptp(0)
         self.X = X_train
         self.y = y_train    
 

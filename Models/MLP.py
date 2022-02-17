@@ -1,41 +1,35 @@
 import torch.nn as nn
+from math import log
 
-# FIXME le MLP fait overfit trop vite (j'ai testé avec les embeddings tout seul ça overfit def water)
 class MLP(nn.Module):
     def __init__(self, params) -> None:
         super().__init__()
-        in_size = params.embed_dim
-        hidden_dim = params.hidden_dim
-        self.norm = nn.LayerNorm
-        self.fc = nn.Sequential(
-            nn.Linear(in_size, hidden_dim),
-            nn.ReLU(), 
-            self.norm(hidden_dim),
-            # nn.Dropout(params.dropout),
-            # nn.Linear(hidden_dim, hidden_dim),
-            # nn.ReLU(),
-            # self.norm(hidden_dim),
-            nn.Dropout(params.dropout),
-            nn.Linear(hidden_dim, hidden_dim//2),
-            nn.ReLU(),
-            self.norm(hidden_dim//2),
-            nn.Dropout(params.dropout),
-            nn.Linear(hidden_dim//2, hidden_dim//4),
-            nn.ReLU(),
-            self.norm(hidden_dim//4),
-            nn.Dropout(params.dropout),
-            nn.Linear(hidden_dim//4, 1)
-        )
-        # self.fc = nn.Sequential(
-        #     nn.Linear(in_size, hidden_dim),
-        #     nn.ReLU(), 
-        #     self.norm(hidden_dim),
-        #     nn.Linear(hidden_dim, hidden_dim),
-        #     nn.ReLU(),
-        #     self.norm(hidden_dim),
-        #     nn.Linear(hidden_dim, 1)
-        # )
+        in_size = params.input_size
+
+        self.norm = getattr(nn, params.normalization)
+        self.activation = getattr(nn, params.activation)
+
+        self.layers = nn.ModuleList()
+        
+        self.layers.append(nn.Linear(in_size, in_size//2))
+        in_size //= 2
+
+        for _ in range(int(log(in_size, 2))):
+            
+            self.layers.append(nn.Sequential(nn.Linear(in_size, in_size//2),
+                                            self.norm(in_size//2),
+                                            self.activation(in_size//2),
+                                            nn.Dropout(params.dropout)
+                                            )
+            )
+            in_size //= 2
+            
+            if in_size <= 400:
+                break
+
+        self.layers.append(nn.Linear(in_size, 1))
 
     def forward(self, x):
-        out = self.fc(x)
-        return out.squeeze()
+        for layer in self.layers:
+            x = layer(x)
+        return x.squeeze()

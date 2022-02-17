@@ -47,7 +47,7 @@ def main():
         
         agent = BaseTrainer(parameters, wandb_run)
 
-        if not parameters.data_param.only_create_embeddings:
+        if not parameters.data_param.only_create_abstract_embeddings and not parameters.data_param.only_create_keywords :
             agent.run()
             
     else: 

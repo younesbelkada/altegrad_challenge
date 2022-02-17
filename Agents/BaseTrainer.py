@@ -1,6 +1,7 @@
 import pytorch_lightning as pl
 import torch
 import wandb
+from tqdm import tqdm
 from utils.agent_utils import get_datamodule
 from utils.callbacks import AutoSaveModelCheckpoint
 import csv
@@ -23,19 +24,16 @@ class BaseTrainer:
         
         logger = init_logger("BaseTrainer", "INFO")
 
+        config.data_param.abstract_embeddings_file = None
+        config.data_param.keywords_embeddings_file = None
+        config.data_param.keywords_file = None
+
         if config.data_param.only_create_abstract_embeddings:
             logger.info('Loading Data module...')
             self.datamodule = get_datamodule(
                 config.data_param
             )
             self.datamodule.dataset.load_abstract_embeddings()
-
-        elif config.data_param.only_create_keywords_embeddings:
-            logger.info('Loading Data module...')
-            self.datamodule = get_datamodule(
-                config.data_param
-            )
-            self.datamodule.dataset.load_keywords_embeddings()
 
         elif config.data_param.only_create_keywords:
             logger.info('Loading Data module...')
@@ -56,7 +54,7 @@ class BaseTrainer:
             logger.info('Loading Model module...')
             self.pl_model = BaseModule(config.network_param, config.optim_param)
         
-            wandb.watch(self.pl_model.model)
+            self.wb_run.watch(self.pl_model.model)
     
     def run(self):
         trainer = pl.Trainer(
@@ -92,7 +90,7 @@ class BaseTrainer:
     def load_artifact(self,network_param, data_param):
         network_param.weight_checkpoint     = get_artifact(network_param.artifact, type="model")
         data_param.abstract_embeddings_file = get_artifact(data_param.abstract_embeddings_artifact, type="dataset")
-        data_param.keywords_embeddings_file = get_artifact(data_param.keywords_embeddings_file, type="dataset")
+        data_param.keywords_embeddings_file = get_artifact(data_param.keywords_embeddings_artifact, type="dataset")
         data_param.keywords_file            = get_artifact(data_param.keywords_artifact, type="dataset")
 
     def get_callbacks(self):
