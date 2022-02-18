@@ -333,9 +333,6 @@ class BaseSentenceEmbeddings(Dataset):
                 X_train[2*i] = self.get_final_embeddings(edge[0], edge[1], row_dim)
                 y_train[2*i] = 1 
 
-                name_file = osp.join(os.getcwd(), "input", f"full_embeddings_X.npy")
-                np.save(open(name_file, "wb"), self.X)
-        
                 n1 = nodes[randint(0, n-1)] 
                 n2 = nodes[randint(0, n-1)]
 
