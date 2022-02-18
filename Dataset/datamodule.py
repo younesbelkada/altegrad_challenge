@@ -28,7 +28,7 @@ class BaseDataModule(LightningDataModule):
             val_length = int(len(self.dataset)*self.config.split_val)
             lengths = [len(self.dataset)-val_length, val_length]
             self.train_dataset, self.val_dataset = random_split(self.dataset, lengths)
-
+        
         if stage == "predict":
             self.dataset.build_predict()
 

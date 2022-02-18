@@ -51,7 +51,7 @@ class BaseTrainer:
             self.datamodule = get_datamodule(
                 config.data_param
             )
-
+            config.network_param.input_size = self.datamodule.dataset.get_input_dim()
             logger.info('Loading Model module...')
             self.pl_model = BaseModule(config.network_param, config.optim_param)
         

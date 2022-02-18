@@ -28,7 +28,7 @@ class Hparams:
     weights_path   : str           = "weights"
     dev_run        : bool          = False
     train          : bool          = True
-    best_model     : str           = "mild-pyramid-552"
+    best_model     : str           = "scarlet-rain-621"
 
 @dataclass
 class NetworkParams:
@@ -36,15 +36,10 @@ class NetworkParams:
     weight_checkpoints : str = ""
     artifact : str = ""
     vocab_size : int = 138499
-    input_size : int = (768 * 4) + 4 # 1546
-    # input_size : int = (768 * 2) + 4 # 1546
-    # input_size : int = (768 * 4) + 4 + 10
-    # input_size : int = 4
-
     dropout         : float = 0.6
     normalization   : str   = 'BatchNorm1d'
     activation      : str   = 'GELU'
-
+    input_size      : int   = 0    # dummy arg
     nb_authors      : int   = 149682
     emb_authors_dim : int   = 64
 
@@ -67,7 +62,7 @@ class DatasetParams:
     """
     dataset_name            : Optional[str]           = "SentenceEmbeddingsFeatures"     # dataset, use <Dataset>Eval for FT
     num_workers             : int                     = 10         # number of workers for dataloadersint
-    batch_size              : int                     = 2048     # batch_size
+    batch_size              : int                     = 64     # batch_size
     split_val               : float                   = 0.2
     root_dataset            : Optional[str]           = osp.join(os.getcwd(), "input")
     vocab_size              : int                     = 138499

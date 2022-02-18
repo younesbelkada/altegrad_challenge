@@ -35,18 +35,23 @@ class BaseSentenceEmbeddings(Dataset):
         
         if self.params.use_abstract_embed or self.params.use_neighbors_embed:
             self.abstract_embeddings_file = self.params.abstract_embeddings_file
+            self.load_abstract_embeddings()
         
         if self.params.use_keywords_embed:
             
             self.keywords_embeddings_file = self.params.keywords_embeddings_file
             self.keywords_file = self.params.keywords_file
             self.nb_keywords = self.params.nb_keywords
+            self.load_keywords()
         
         if self.params.use_authors_embed:
             self.dict_authors, unique_authors = get_authors_dict(self.path_authors)
             self.unique_authors = len(unique_authors)
             self.dict_authors_to_index = {unique_authors[i]:i for i in range(len(unique_authors))}
 
+    def get_input_dim(self):
+        return self.get_final_embeddings(0,1).shape[0]
+    
     def get_features(self, edg0, edg1):
 
         list_features = [edg0, edg1]
@@ -115,12 +120,12 @@ class BaseSentenceEmbeddings(Dataset):
         mean_emb_n1 = torch.zeros(emb_dim)
         mean = [torch.from_numpy(self.abstract_embeddings[n1]).unsqueeze(0) for n1 in neighbors_node1 if n1 != current_node2]
         if len(mean)>0:
-            mean_emb_n1 = torch.mean(torch.cat(mean,dim=0), dim = 0)
+            mean_emb_n1 = torch.mean(torch.cat(mean, dim=0), dim = 0)
 
         mean_emb_n2 = torch.zeros(emb_dim)
         mean = [torch.from_numpy(self.abstract_embeddings[n2]).unsqueeze(0) for n2 in neighbors_node2 if n2 != current_node1]
         if len(mean)>0:
-            mean_emb_n2 = torch.mean(torch.cat(mean,dim=0), dim = 0)
+            mean_emb_n2 = torch.mean(torch.cat(mean, dim=0), dim = 0)
 
         return torch.cat((mean_emb_n1, mean_emb_n2))
 
@@ -133,16 +138,29 @@ class BaseSentenceEmbeddings(Dataset):
 
     def get_keywords_embeddings(self, current_node1, current_node2):
         
-        keywords_emb1 = self.keywords_embeddings[current_node1]
-        keywords_emb2 = self.keywords_embeddings[current_node2]
+        # keywords_emb1 = torch.from_numpy(self.keywords_embeddings[current_node1])
+        # keywords_emb2 = torch.from_numpy(self.keywords_embeddings[current_node2])
 
-        keyword_feat_mean1 = torch.from_numpy(keywords_emb1).mean(dim=0).flatten()
-        keyword_feat_mean2 = torch.from_numpy(keywords_emb2).mean(dim=0).flatten()
+        # keyword_feat_mean1 = keywords_emb1.mean(dim=0)
+        # keyword_feat_mean2 = keywords_emb2.mean(dim=0)
 
-        cosine_feature = F.cosine_similarity(torch.from_numpy(keywords_emb1), torch.from_numpy(keywords_emb2), dim=1)
-        pdist_feature = F.pdist(torch.from_numpy(keywords_emb1), torch.from_numpy(keywords_emb2), dim=1)
+        # cosine_feature = F.cosine_similarity(keywords_emb1, keywords_emb2, dim=1)
+        # pdist_feature =  F.pdist(torch.cat((keywords_emb1, keywords_emb2)))
+        
+        # (4, 5) keywords length and intersection
+        set_key_1 = set([k[0] if isinstance(k, tuple) else k for k in self.keywords[current_node1]]) 
+        set_key_2 = set([k[0] if isinstance(k, tuple) else k for k in self.keywords[current_node2]]) 
+        
+        if 'N' in set_key_1 or 'N' in set_key_2:
+            len_keywords = 0
+            len_com_keywords = 0
+        else:
+            len_keywords = len(set_key_1)
+            len_com_keywords = len(set_key_1.intersection(set_key_2))
 
-        return torch.cat((keyword_feat_mean1, keyword_feat_mean2, cosine_feature, pdist_feature))
+        # return torch.cat((keyword_feat_mean1, keyword_feat_mean2, cosine_feature, pdist_feature))
+        # return torch.cat((cosine_feature, pdist_feature))
+        return torch.tensor([len_com_keywords, len_keywords])
 
     def get_authors_embeddings(self, current_node1, current_node2):
         
@@ -246,15 +264,14 @@ class BaseSentenceEmbeddings(Dataset):
         self.predict_mode = True
         
         with open(self.path_predict, 'r') as file:
-            self.X = np.zeros((len(file),2), dtype = int)
-            for i in range(len(file)):
-                line = file[i]
+            self.X =[]
+            for line in file:
                 line = line.split(',')
                 edg0 = int(line[0])
                 edg1 = int(line[1])
                 self.X.append((edg0, edg1))
                 
-        self.y = np.zeros(self.X.shape[0])
+        self.y = np.zeros(len(self.X))
 
     def build_train(self):
 
@@ -319,6 +336,10 @@ class BaseSentenceEmbeddings(Dataset):
         if self.params.use_neighbors_embed:
             neighbor_embeddings = self.get_neighbors_embeddings(node1,node2)
             final_embeddings    = torch.cat((final_embeddings, neighbor_embeddings))
+
+        if self.params.use_keywords_embed:
+            keywords_embeddings = self.get_keywords_embeddings(node1,node2)
+            final_embeddings    = torch.cat((final_embeddings, keywords_embeddings))
         
         return final_embeddings
     
