@@ -91,20 +91,21 @@ class BaseSentenceEmbeddings(Dataset):
         # return torch.cat([torch.Tensor(f) for f in list_features])
         return torch.tensor(list_features)
 
-    def get_neighbors_embeddings(self, current_node1, current_node2):
+    def get_neighbors_embeddings(self, current_node1, current_node2, emb_dim=768):
         
+
         neighbors_node1 = self.G.neighbors(current_node1)
         neighbors_node2 = self.G.neighbors(current_node2)
 
         neighbors_node1 = list(neighbors_node1)
         neighbors_node2 = list(neighbors_node2)
         
-        mean_emb_n1 = torch.zeros(self.emb_dim)
+        mean_emb_n1 = torch.zeros(emb_dim)
         mean = [torch.from_numpy(self.abstract_embeddings[n1]).unsqueeze(0) for n1 in neighbors_node1 if n1 != current_node2]
         if len(mean)>0:
             mean_emb_n1 = torch.mean(torch.cat(mean,dim=0), dim = 0)
 
-        mean_emb_n2 = torch.zeros(self.emb_dim)
+        mean_emb_n2 = torch.zeros(emb_dim)
         mean = [torch.from_numpy(self.abstract_embeddings[n2]).unsqueeze(0) for n2 in neighbors_node2 if n2 != current_node1]
         if len(mean)>0:
             mean_emb_n2 = torch.mean(torch.cat(mean,dim=0), dim = 0)
@@ -251,22 +252,23 @@ class BaseSentenceEmbeddings(Dataset):
         self.predict_mode = False
         
         nodes = list(self.G.nodes())
-        edges = list(self.G.edges())
+        edges = self.G.edges()
 
-        m = len(edges)
-        n = len(nodes)
+        m = self.G.number_of_edges()
+        n = self.G.number_of_nodes()
 
-        self.X = np.zeros((2*m, 2))
-        self.y = np.zeros(2*m)
+        X = np.zeros((2*m, 2), dtype=int)
+        y = np.zeros(2*m)
 
         self.logger.info("Starting loop ...")
 
         with get_progress_bar() as progress:
-            task1 = progress.add_task(f"[cyan]Processing embeddings ", total = m)
-            for i in range(m):
+            i = 0
+            task1 = progress.add_task(f"[cyan]Processing embeddings ", total = m, info = "-")
+            for i, edge in enumerate(self.G.edges()):
                 
-                self.X[2*i] = edges[i]
-                self.y[2*i] = 1
+                X[2*i] = edge
+                y[2*i] = 1
                 
                 n1 = nodes[randint(0, n-1)] 
                 n2 = nodes[randint(0, n-1)]
@@ -275,11 +277,13 @@ class BaseSentenceEmbeddings(Dataset):
                     n1 = nodes[randint(0, n-1)]
                     n2 = nodes[randint(0, n-1)]
 
-                self.X[2*i+1] = (n1, n2)
-                self.y[2*i+1] = 0 
+                X[2*i+1] = n1, n2
+                y[2*i+1] = 0 
                 
-                progress.update(task1, advance=1)
-
+                progress.update(task1, advance=1, info = f"{i}/{m}")
+        
+        self.X = X
+        self.y = y
         self.logger.info("Finished building train ...")
 
         self.clean()
@@ -305,7 +309,6 @@ class BaseSentenceEmbeddings(Dataset):
         
         self.logger.info("Cleaning useless class attributes ...")
 
-        del self.G 
         del self.abstracts
 
     def __len__(self):

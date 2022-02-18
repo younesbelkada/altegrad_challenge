@@ -31,6 +31,7 @@ def get_progress_bar():
         SpinnerColumn(),
         BarColumn(),
         "[progress.percentage]{task.percentage:>3.0f}%",
+        TextColumn("[bold blue]{task.fields[info]}", justify="right"),
         TimeElapsedColumn(),
         TimeRemainingColumn(),
         "\n"

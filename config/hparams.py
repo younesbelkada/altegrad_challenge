@@ -17,7 +17,6 @@ from simple_parsing.helpers import Serializable, choice, dict_field, list_field
 class Hparams:
     """Hyperparameters of for the run"""
 
-    
     wandb_entity  : str  = "altegrad-gnn-link-prediction"         # name of the project
     debug         : bool = True            # test code before running, if testing, no checkpoints are written
     wandb_project : str  = f"{'test-'*debug}altegrad"
@@ -81,14 +80,10 @@ class DatasetParams:
     only_create_keywords             : bool = False
     nb_keywords                      : int = 10               
 
-    create_npy_embeddings            : bool = True
-
     use_neighbors_embed              : bool = True
     use_keywords_embed               : bool = False
     use_abstract_embed               : bool = True
     use_handcrafted_embed            : bool = True
-
-    root_embeddings                  : str  = osp.join(os.getcwd(), "input", "train_npy")
 
 @dataclass
 class Parameters:
