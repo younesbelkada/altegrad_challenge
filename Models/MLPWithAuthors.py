@@ -1,7 +1,8 @@
+import torch
 import torch.nn as nn
 from math import log
 
-class MLP(nn.Module):
+class MLPWithAuthors(nn.Module):
     def __init__(self, params) -> None:
         super().__init__()
         in_size = params.input_size
@@ -10,15 +11,17 @@ class MLP(nn.Module):
         self.activation = getattr(nn, params.activation)
 
         self.layers = nn.ModuleList()
+
+        self.authors_embbedings = nn.Embedding(params.nb_authors, params.emb_authors_dim)
         
-        self.layers.append(nn.Sequential(nn.Linear(in_size, 2*in_size),
-                                            self.norm(2*in_size),
+        self.layers.append(nn.Sequential(nn.Linear(in_size, in_size),
+                                            self.norm(in_size),
                                             self.activation(),
                                             nn.Dropout(params.dropout)
                                             )
                             )
 
-        self.layers.append(nn.Sequential(nn.Linear(2*in_size, in_size),
+        self.layers.append(nn.Sequential(nn.Linear(in_size, in_size),
                                             self.norm(in_size),
                                             self.activation(),
                                             nn.Dropout(params.dropout)
@@ -43,6 +46,10 @@ class MLP(nn.Module):
         self.layers.append(nn.Linear(in_size, 1))
 
     def forward(self, x):
+        authors, x = x
+        authors_node1, authors_node2 = authors
+        emb_author1, emb_author2 = self.authors_embbedings(authors_node1), self.authors_embbedings(authors_node2)
+        x  = torch.cat((emb_author1, emb_author2, x), dim=1)
         for layer in self.layers:
             x = layer(x)
         return x.squeeze()

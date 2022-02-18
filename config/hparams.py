@@ -29,7 +29,7 @@ class Hparams:
     weights_path   : str           = "weights"
     dev_run        : bool          = False
     train          : bool          = True
-    best_model     : str           = "solar-grass-499"
+    best_model     : str           = "mild-pyramid-552"
 
 @dataclass
 class NetworkParams:
@@ -37,11 +37,17 @@ class NetworkParams:
     weight_checkpoints : str = ""
     artifact : str = ""
     vocab_size : int = 138499
-    input_size : int = (768 * 4) + 4 + 10 # 1546
+    input_size : int = (768 * 4) + 4 # 1546
+    # input_size : int = (768 * 2) + 4 # 1546
+    # input_size : int = (768 * 4) + 4 + 10
+    # input_size : int = 4
 
-    dropout         : float = 0.05
+    dropout         : float = 0.6
     normalization   : str   = 'BatchNorm1d'
     activation      : str   = 'GELU'
+
+    nb_authors      : int   = 149682
+    emb_authors_dim : int   = 64
 
 @dataclass
 class OptimizerParams: 
@@ -50,19 +56,19 @@ class OptimizerParams:
     optimizer     : str   = "Adam"  # Optimizer default vit: AdamW, default resnet50: Adam
     lr            : float = 0.003     # learning rate,               default = 5e-4
     min_lr        : float = 5e-6     # min lr reached at the end of the cosine schedule
-    weight_decay  : float = 0.00
+    weight_decay  : float = 1e-8
     scheduler     : bool  = True
     warmup_epochs : int   = 5
-    max_epochs    : int   = 200
+    max_epochs    : int   = 1000
 
 @dataclass
 class DatasetParams:
     """Dataset Parameters
     ! The batch_size and number of crops should be defined here
     """
-    dataset_name            : Optional[str]           = "SentenceEmbeddingsGraphWithNeighbors"     # dataset, use <Dataset>Eval for FT
+    dataset_name            : Optional[str]           = "SentenceEmbeddingsFeatures"     # dataset, use <Dataset>Eval for FT
     num_workers             : int                     = 10         # number of workers for dataloadersint
-    batch_size              : int                     = 2048       # batch_size
+    batch_size              : int                     = 2048     # batch_size
     split_val               : float                   = 0.2
     root_dataset            : Optional[str]           = osp.join(os.getcwd(), "input")
     vocab_size              : int                     = 138499
@@ -73,7 +79,12 @@ class DatasetParams:
     name_transformer                 : str = 'sentence-transformers/allenai-specter'
     only_create_abstract_embeddings  : bool = False
     only_create_keywords             : bool = False
-    nb_keywords                      : int = 10
+    nb_keywords                      : int = 10               
+
+    use_neighbors_embed              : bool = True
+    use_keywords_embed               : bool = False
+    use_abstract_embed               : bool = True
+    use_handcrafted_embed            : bool = True
 
 @dataclass
 class Parameters:

@@ -1,7 +1,6 @@
 import os
 import os.path as osp
 from random import randint
-
 import networkx as nx
 import numpy as np
 import torch
@@ -11,6 +10,8 @@ from torch.utils.data import Dataset
 from utils.dataset_utils import get_abstracts_dict
 from utils.logger import init_logger
 from keybert import KeyBERT
+import torch.nn.functional as F
+from utils.dataset_utils import get_progress_bar
 
 class BaseSentenceEmbeddings(Dataset):
     def __init__(self, params, name_dataset) -> None:
@@ -22,6 +23,7 @@ class BaseSentenceEmbeddings(Dataset):
         path_txt = osp.join(params.root_dataset, 'abstracts.txt')
         path_edges = osp.join(params.root_dataset, 'edgelist.txt')
         self.path_predict = osp.join(params.root_dataset, 'test.txt')
+        self.path_authors = osp.join(params.root_dataset, 'authors.txt')
         self.G = nx.read_edgelist(path_edges, delimiter=',', create_using=nx.Graph(), nodetype=int)
 
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -36,8 +38,8 @@ class BaseSentenceEmbeddings(Dataset):
     def get_features(self, edg0, edg1):
 
         list_features = [edg0, edg1]
-        # Graph features
-        # (1, 2) degree of two nodes
+        # Graph features
+        # (1, 2) degree of two nodes
         # (3) sum of degrees of two nodes
         # (4) absolute value of difference of degrees of two nodes
         deg_edg0 = self.G.degree(edg0)
@@ -85,7 +87,49 @@ class BaseSentenceEmbeddings(Dataset):
         # list_features.append(keyword_feat1)
         # list_features.append(keyword_feat2)
 
-        return tuple(list_features)
+        # return tuple(list_features)
+        # return torch.cat([torch.Tensor(f) for f in list_features])
+        return torch.tensor(list_features)
+
+    def get_neighbors_embeddings(self, current_node1, current_node2):
+        
+        neighbors_node1 = self.G.neighbors(current_node1)
+        neighbors_node2 = self.G.neighbors(current_node2)
+
+        neighbors_node1 = list(neighbors_node1)
+        neighbors_node2 = list(neighbors_node2)
+        
+        mean_emb_n1 = torch.zeros(self.emb_dim)
+        mean = [torch.from_numpy(self.abstract_embeddings[n1]).unsqueeze(0) for n1 in neighbors_node1 if n1 != current_node2]
+        if len(mean)>0:
+            mean_emb_n1 = torch.mean(torch.cat(mean,dim=0), dim = 0)
+
+        mean_emb_n2 = torch.zeros(self.emb_dim)
+        mean = [torch.from_numpy(self.abstract_embeddings[n2]).unsqueeze(0) for n2 in neighbors_node2 if n2 != current_node1]
+        if len(mean)>0:
+            mean_emb_n2 = torch.mean(torch.cat(mean,dim=0), dim = 0)
+
+        return torch.cat((mean_emb_n1, mean_emb_n2))
+
+    def get_abstract_embeddings(self, current_node1, current_node2):
+        
+        emb1 = torch.from_numpy(self.abstract_embeddings[current_node1])
+        emb2 = torch.from_numpy(self.abstract_embeddings[current_node2])
+        
+        return torch.cat((emb1, emb2))
+
+    def get_keywords_embeddings(self, current_node1, current_node2):
+        
+        keywords_emb1 = self.keywords_embeddings[current_node1]
+        keywords_emb2 = self.keywords_embeddings[current_node2]
+
+        keyword_feat_mean1 = torch.from_numpy(keywords_emb1).mean(dim=0).flatten()
+        keyword_feat_mean2 = torch.from_numpy(keywords_emb2).mean(dim=0).flatten()
+
+        cosine_feature = F.cosine_similarity(torch.from_numpy(keywords_emb1), torch.from_numpy(keywords_emb2), dim=1)
+        pdist_feature = F.pdist(torch.from_numpy(keywords_emb1), torch.from_numpy(keywords_emb2), dim=1)
+
+        return torch.cat((keyword_feat_mean1, keyword_feat_mean2, cosine_feature, pdist_feature))
 
     def load_keywords(self):
 
@@ -136,7 +180,7 @@ class BaseSentenceEmbeddings(Dataset):
             self.keywords = np.load(open(self.keywords_file, 'rb'), allow_pickle=True)
             
             self.logger.info("Keywords embeddings file already exists, loading it directly")
-            self.logger.info(f"Loading {self.keywords_embeddings_file}")
+            self.logger.info(f"Loading {self.keywords_embeddings_file} keywords embeddings")
             self.keywords_embeddings = np.load(open(self.keywords_embeddings_file, 'rb'))
 
     def load_abstract_embeddings(self):
@@ -167,60 +211,185 @@ class BaseSentenceEmbeddings(Dataset):
         
         elif os.path.isfile(self.abstract_embeddings_file):
             self.logger.info("Embedings file already exists, loading it directly")
-            self.logger.info(f"Loading {self.abstract_embeddings_file}")
+            self.logger.info(f"Loading {self.abstract_embeddings_file} abstract embeddings")
             self.abstract_embeddings = np.load(open(self.abstract_embeddings_file, 'rb'))
+
+    # def build_predict(self):
+        
+    #     self.logger.info("Building predict ...")
+        
+    #     if self.params.use_abstract_embed:
+    #         self.load_abstract_embeddings()
+        
+    #     if self.params.use_keywords_embed:        
+    #         self.load_keywords()
+
+    #     self.predict_mode = True
+
+    #     X = []
+    #     with open(self.path_predict, 'r') as file:
+    #         for line in file:
+    #             line = line.split(',')
+    #             edg0 = int(line[0])
+    #             edg1 = int(line[1])
+    #             X.append(self.get_features(edg0, edg1))
+
+    #     X = np.array(X)
+    #     self.X = X
+    #     self.y = np.zeros(self.X.shape[0])
 
     def build_predict(self):
         
         self.logger.info("Building predict ...")
+        
+        if self.params.use_abstract_embed:
+            self.load_abstract_embeddings()
+        
+        if self.params.use_keywords_embed:        
+            self.load_keywords()
 
         self.predict_mode = True
-
+        
+        row_dim =  6 + (self.params.use_neighbors_embed)*self.emb_dim*2 + \
+                        (self.params.use_abstract_embed)*self.emb_dim*2
+        
         X = []
         with open(self.path_predict, 'r') as file:
             for line in file:
                 line = line.split(',')
                 edg0 = int(line[0])
                 edg1 = int(line[1])
-                X.append(self.get_features(edg0, edg1))
+                X.append(self.get_final_embeddings(edg0, edg1, row_dim))
 
         X = np.array(X)
         self.X = X
         self.y = np.zeros(self.X.shape[0])
+
+    # def build_train(self):
+        
+    #     self.logger.info("Building train ...")
+
+    #     self.predict_mode = False
+
+    #     m = self.G.number_of_edges()
+    #     n = self.G.number_of_nodes()
+    #     X_train = np.zeros((2*m, 6))
+    #     y_train = np.zeros(2*m)
+
+    #     nodes = list(self.G.nodes())
+        
+    #     for i, edge in enumerate(self.G.edges()):
+
+    #         X_train[2*i] = self.get_features(edge[0], edge[1])
+    #         y_train[2*i] = 1 
+
+    #         n1 = nodes[randint(0, n-1)] 
+    #         n2 = nodes[randint(0, n-1)]
+
+    #         # FIXME can create pairs of the test set try without negative pairs
+    #         while (n1, n2) in self.G.edges():
+    #             n1 = nodes[randint(0, n-1)]
+    #             n2 = nodes[randint(0, n-1)]
+
+    #         X_train[2*i+1] = self.get_features(n1, n2)
+    #         y_train[2*i+1] = 0
+
+    #     self.logger.info("Finished building train ...")
+
+    #     self.X = X_train
+    #     self.y = y_train    
 
     def build_train(self):
         
         self.logger.info("Building train ...")
 
         self.predict_mode = False
+        
+        if self.params.use_abstract_embed:
+            self.load_abstract_embeddings()
+        
+        if self.params.use_keywords_embed:        
+            self.load_keywords()
 
+        self.emb_dim = 768
         m = self.G.number_of_edges()
         n = self.G.number_of_nodes()
-        X_train = np.zeros((2*m, 6))
+        
+        row_dim =  (self.params.use_handcrafted_embed)*4 + (self.params.use_neighbors_embed)*self.emb_dim*2 + \
+                        (self.params.use_abstract_embed)*self.emb_dim*2
+
+        X_train = np.zeros((2*m, row_dim), dtype = np.float32)
         y_train = np.zeros(2*m)
 
         nodes = list(self.G.nodes())
         
-        for i, edge in enumerate(self.G.edges()):
+        self.logger.info("Starting loop ...")
 
-            X_train[2*i] = self.get_features(edge[0], edge[1])
-            y_train[2*i] = 1 
+        with get_progress_bar() as progress:
+            task1 = progress.add_task(f"[cyan]Processing embeddings ", total = m)
+            for i, edge in enumerate(self.G.edges()):
+                progress.update(task1, advance=1)
 
-            n1 = nodes[randint(0, n-1)] 
-            n2 = nodes[randint(0, n-1)]
+                X_train[2*i] = self.get_final_embeddings(edge[0], edge[1], row_dim)
+                y_train[2*i] = 1 
 
-            # FIXME can create pairs of the test set try without negative pairs
-            while (n1, n2) in self.G.edges():
-                n1 = nodes[randint(0, n-1)]
+                name_file = osp.join(os.getcwd(), "input", f"full_embeddings_X.npy")
+                np.save(open(name_file, "wb"), self.X)
+        
+                n1 = nodes[randint(0, n-1)] 
                 n2 = nodes[randint(0, n-1)]
 
-            X_train[2*i+1] = self.get_features(n1, n2)
-            y_train[2*i+1] = 0
+                # FIXME can create pairs of the test set try without negative pairs
+                while (n1, n2) in self.G.edges():
+                    n1 = nodes[randint(0, n-1)]
+                    n2 = nodes[randint(0, n-1)]
+
+                X_train[2*i+1] = self.get_final_embeddings(edge[0], edge[1], row_dim)
+                y_train[2*i+1] = 0
 
         self.logger.info("Finished building train ...")
 
+        self.clean()
+        
         self.X = X_train
-        self.y = y_train    
+        self.y = y_train  
+
+        name_file = osp.join(os.getcwd(), "input", f"full_embeddings_X.npy")
+        np.save(open(name_file, "wb"), self.X)
+
+        name_file = osp.join(os.getcwd(), "input", f"full_embeddings_y.npy")
+        np.save(open(name_file, "wb"), self.y)
+
+    def get_final_embeddings(self, node1, node2, row_dim):
+        final_embeddings = torch.tensor([])
+
+        if self.params.use_handcrafted_embed:
+            nodes_embeddings    = self.get_features(node1, node2)[2:]
+            final_embeddings    = nodes_embeddings 
+
+        if self.params.use_abstract_embed:
+            abstract_embeddings = self.get_abstract_embeddings(node1, node2)
+            final_embeddings    = torch.cat((final_embeddings, abstract_embeddings))
+        
+        if self.params.use_neighbors_embed:
+            neighbor_embeddings = self.get_neighbors_embeddings(node1,node2)
+            final_embeddings    = torch.cat((final_embeddings, neighbor_embeddings))
+        
+        return final_embeddings
+    
+    def clean(self):
+        
+        self.logger.info("Cleaning useless class attributes ...")
+
+        if self.params.use_abstract_embed:
+            del self.abstract_embeddings
+        
+        if self.params.use_keywords_embed:
+            del self.keywords_embeddings
+            del self.keywords
+        
+        del self.G 
+        del self.abstracts
 
     def __len__(self):
         return self.y.shape[0]

@@ -7,6 +7,8 @@ import random
 from Dataset.BaseSentenceEmbeddings import BaseSentenceEmbeddings
 import torch.nn.functional as F
 
+from utils.dataset_utils import get_authors_dict
+
 class SentenceEmbeddingsVanilla(BaseSentenceEmbeddings):
     def __init__(self, params) -> None:
         super().__init__(params, "SentenceEmbeddings")
@@ -90,8 +92,8 @@ class SentenceEmbeddingsGraphAbstract(BaseSentenceEmbeddings):
         keyword_feat_mean2 = torch.from_numpy(keywords_emb2).mean(dim=0).flatten()
 
         cosine_feature = F.cosine_similarity(torch.from_numpy(keywords_emb1), torch.from_numpy(keywords_emb2), dim=1)
-        # pdist_feature = F.pdist(torch.from_numpy(keywords_emb1), torch.from_numpy(keywords_emb2), dim=1)
-        concatenated_embeddings = torch.cat((cosine_feature, emb1, emb2, keyword_feat_mean1, keyword_feat_mean2, torch.Tensor(self.X[idx, 2:])), dim=0)
+        pdist_feature = F.pdist(torch.from_numpy(keywords_emb1), torch.from_numpy(keywords_emb2), dim=1)
+        concatenated_embeddings = torch.cat((cosine_feature, pdist_feature, emb1, emb2, keyword_feat_mean1, keyword_feat_mean2, torch.Tensor(self.X[idx, 2:])), dim=0)
 
         if not self.predict_mode:
             label = self.y[idx]
@@ -161,6 +163,60 @@ class SentenceEmbeddingsGraphWithNeighbors(BaseSentenceEmbeddings):
             label = self.y[idx]
             return concatenated_embeddings, label
         return concatenated_embeddings
+
+
+class SentenceEmbeddingsFeatures(BaseSentenceEmbeddings):
+    def __init__(self, params) -> None:
+        super().__init__(params, "SentenceEmbeddingsFeatures")
+
+    def __getitem__(self, idx):
+        concatenated_embeddings = self.X[idx]
+        if not self.predict_mode:
+            label = self.y[idx]
+            return concatenated_embeddings, label
+        return concatenated_embeddings
+
+
+class SentenceEmbeddingsGraphWithNeighborsAndAuthors(BaseSentenceEmbeddings):
+    def __init__(self, params) -> None:
+        super().__init__(params, "SentenceEmbeddingsGraphWithNeighborsAndAuthors")
+        self.dict_authors, unique_authors = get_authors_dict(self.path_authors)
+        self.unique_authors = len(unique_authors)
+        self.dict_authors_to_index = {unique_authors[i]:i for i in range(len(unique_authors))}
+
+        
+
+    def __getitem__(self, idx):
+        current_node1, current_node2 = int(self.X[idx, 0]), int(self.X[idx, 1])
+
+        authors_node1, authors_node2 = self.dict_authors[current_node1][randint(0, len(self.dict_authors[current_node1])-1)], self.dict_authors[current_node2][randint(0, len(self.dict_authors[current_node2])-1)]
+        authors_node1, authors_node2 = self.dict_authors_to_index[authors_node1], self.dict_authors_to_index[authors_node2]
+
+        emb1 = torch.from_numpy(self.abstract_embeddings[current_node1])
+        emb2 = torch.from_numpy(self.abstract_embeddings[current_node2])
+
+        neighbors_node1 = self.G.neighbors(current_node1)
+        neighbors_node2 = self.G.neighbors(current_node2)
+
+        neighbors_node1 = list(neighbors_node1)
+        neighbors_node2 = list(neighbors_node2)
+        
+        mean_emb_n1 = torch.zeros(emb1.shape)
+        mean = [torch.from_numpy(self.abstract_embeddings[n1]).unsqueeze(0) for n1 in neighbors_node1 if n1 != current_node2]
+        if len(mean)>0:
+            mean_emb_n1 = torch.mean(torch.cat(mean,dim=0), dim = 0)
+
+        mean_emb_n2 = torch.zeros(emb2.shape)
+        mean = [torch.from_numpy(self.abstract_embeddings[n2]).unsqueeze(0) for n2 in neighbors_node2 if n2 != current_node1]
+        if len(mean)>0:
+            mean_emb_n2 = torch.mean(torch.cat(mean,dim=0), dim = 0)
+
+        concatenated_embeddings = torch.cat((emb1, emb2, mean_emb_n1, mean_emb_n2, torch.Tensor(self.X[idx][2:])), dim=0)
+
+        if not self.predict_mode:
+            label = self.y[idx]
+            return ((authors_node1, authors_node2), concatenated_embeddings), label
+        return ((authors_node1, authors_node2), concatenated_embeddings)
 
 
 class SentenceEmbeddingsGraphAbstractWithNeighbors(BaseSentenceEmbeddings):

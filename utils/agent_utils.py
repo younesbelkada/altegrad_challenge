@@ -5,7 +5,6 @@ import wandb
 from config.hparams import Parameters
 from Dataset.datamodule import BaseDataModule
 
-
 def get_net(network_name, network_param):
     """
     Get Network Architecture based on arguments provided
