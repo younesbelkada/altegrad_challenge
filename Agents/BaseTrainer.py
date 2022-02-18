@@ -11,6 +11,7 @@ from Models.BaseModule import BaseModule
 from pytorch_lightning.callbacks import (
     LearningRateMonitor,
     RichProgressBar,
+    StochasticWeightAveraging
 )
 
 from utils.agent_utils import get_artifact
@@ -54,17 +55,27 @@ class BaseTrainer:
             logger.info('Loading Model module...')
             self.pl_model = BaseModule(config.network_param, config.optim_param)
         
+        if self.config.train:
             self.wb_run.watch(self.pl_model.model)
     
     def run(self):
+        if self.config.tune_lr:
+            trainer = pl.Trainer(
+                logger=self.wb_run,
+                gpus=self.config.gpu,
+                auto_lr_find=True,
+                accelerator="auto",
+                default_root_dir = self.wb_run.save_dir
+                
+            )
+            trainer.logger = self.wb_run
+            trainer.tune(self.pl_model, datamodule=self.datamodule)
+            
         trainer = pl.Trainer(
             logger=self.wb_run,  # W&B integration
             callbacks=self.get_callbacks(),
             gpus=self.config.gpu,  # use all available GPU's
             max_epochs=self.config.max_epochs,  # number of epochs
-            check_val_every_n_epoch=self.config.val_freq,
-            fast_dev_run=self.config.dev_run,
-            accumulate_grad_batches=self.config.accumulate_size,
             log_every_n_steps=1,
         )
         trainer.logger = self.wb_run
@@ -94,7 +105,7 @@ class BaseTrainer:
         data_param.keywords_file            = get_artifact(data_param.keywords_artifact, type="dataset")
 
     def get_callbacks(self):
-        callbacks = [RichProgressBar(), LearningRateMonitor()]
+        callbacks = [RichProgressBar(), LearningRateMonitor(), StochasticWeightAveraging()]
         monitor = "val/loss"
         mode = "min"
         wandb.define_metric(monitor, summary=mode)

@@ -23,15 +23,13 @@ class Hparams:
     wandb_project : str  = f"{'test-'*debug}altegrad"
     root_dir      : str  = os.getcwd()  # root_dir
     seed_everything: Optional[int] = None   # seed for the whole run
-    tune_lr        : bool          = False  # tune the model on first run
+    tune_lr        : bool          = True  # tune the model on first run
     gpu            : int           = 1      # number or gpu
-    val_freq       : int           = 1      # validation frequency
-    accumulate_size: int           = 1    # gradient accumulation batch size
     max_epochs     : int           = 1000    # maximum number of epochs
     weights_path   : str           = "weights"
     dev_run        : bool          = False
     train          : bool          = True
-    best_model     : str           = "clear-water-350"
+    best_model     : str           = "solar-grass-499"
 
 @dataclass
 class NetworkParams:
@@ -39,21 +37,21 @@ class NetworkParams:
     weight_checkpoints : str = ""
     artifact : str = ""
     vocab_size : int = 138499
-    input_size : int = (768 * 2) + 4 + (768*20)
+    input_size : int = (768 * 4) + 4 + 10 # 1546
 
-    dropout         : float = 0.0
-    normalization   : str   = 'LayerNorm' # BatchNorm1d
-    activation      : str   = 'ReLU'
+    dropout         : float = 0.05
+    normalization   : str   = 'BatchNorm1d'
+    activation      : str   = 'GELU'
 
 @dataclass
 class OptimizerParams: 
     """Optimization parameters"""
 
     optimizer     : str   = "Adam"  # Optimizer default vit: AdamW, default resnet50: Adam
-    lr            : float = 0.00003     # learning rate,               default = 5e-4
+    lr            : float = 0.003     # learning rate,               default = 5e-4
     min_lr        : float = 5e-6     # min lr reached at the end of the cosine schedule
     weight_decay  : float = 0.00
-    scheduler     : bool  = False
+    scheduler     : bool  = True
     warmup_epochs : int   = 5
     max_epochs    : int   = 200
 
@@ -62,8 +60,8 @@ class DatasetParams:
     """Dataset Parameters
     ! The batch_size and number of crops should be defined here
     """
-    dataset_name            : Optional[str]           = "SentenceEmbeddingsGraphAbstract"     # dataset, use <Dataset>Eval for FT
-    num_workers             : int                     = 20         # number of workers for dataloadersint
+    dataset_name            : Optional[str]           = "SentenceEmbeddingsGraphWithNeighbors"     # dataset, use <Dataset>Eval for FT
+    num_workers             : int                     = 10         # number of workers for dataloadersint
     batch_size              : int                     = 2048       # batch_size
     split_val               : float                   = 0.2
     root_dataset            : Optional[str]           = osp.join(os.getcwd(), "input")

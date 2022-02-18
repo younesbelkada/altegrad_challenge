@@ -5,7 +5,7 @@ import torch
 import random
 
 from Dataset.BaseSentenceEmbeddings import BaseSentenceEmbeddings
-
+import torch.nn.functional as F
 
 class SentenceEmbeddingsVanilla(BaseSentenceEmbeddings):
     def __init__(self, params) -> None:
@@ -72,22 +72,30 @@ class SentenceEmbeddingsGraphAbstract(BaseSentenceEmbeddings):
 
     def __getitem__(self, idx):
 
-        pos1 = random.randint(0, 1)
-        pos2 = 1-pos1
+        # pos1 = random.randint(0, 1)
+        # pos2 = 1-pos1
+        pos1 = 0
+        pos2 = 1
 
         emb1 = torch.from_numpy(self.abstract_embeddings[int(self.X[idx, pos1])])
         emb2 = torch.from_numpy(self.abstract_embeddings[int(self.X[idx, pos2])])
 
-        keyword_feat1 = torch.from_numpy(self.keywords_embeddings[pos1]).flatten()
-        keyword_feat2 = torch.from_numpy(self.keywords_embeddings[pos2]).flatten()
+        # keyword_feat1 = torch.from_numpy(self.keywords_embeddings[pos1]).flatten()
+        # keyword_feat2 = torch.from_numpy(self.keywords_embeddings[pos2]).flatten()
 
-        concatenated_embeddings = torch.cat((keyword_feat1, emb1, keyword_feat2, emb2, torch.Tensor(self.X[idx, 2:])), dim=0)
+        keywords_emb1 = self.keywords_embeddings[pos1]
+        keywords_emb2 = self.keywords_embeddings[pos2]
+
+        keyword_feat_mean1 = torch.from_numpy(keywords_emb1).mean(dim=0).flatten()
+        keyword_feat_mean2 = torch.from_numpy(keywords_emb2).mean(dim=0).flatten()
+
+        cosine_feature = F.cosine_similarity(torch.from_numpy(keywords_emb1), torch.from_numpy(keywords_emb2), dim=1)
+        # pdist_feature = F.pdist(torch.from_numpy(keywords_emb1), torch.from_numpy(keywords_emb2), dim=1)
+        concatenated_embeddings = torch.cat((cosine_feature, emb1, emb2, keyword_feat_mean1, keyword_feat_mean2, torch.Tensor(self.X[idx, 2:])), dim=0)
 
         if not self.predict_mode:
             label = self.y[idx]
             return concatenated_embeddings, label
-        
-        
         return concatenated_embeddings
 
 
@@ -148,6 +156,50 @@ class SentenceEmbeddingsGraphWithNeighbors(BaseSentenceEmbeddings):
             mean_emb_n2 = torch.mean(torch.cat(mean,dim=0), dim = 0)
 
         concatenated_embeddings = torch.cat((emb1, emb2, mean_emb_n1, mean_emb_n2, torch.Tensor(self.X[idx][2:])), dim=0)
+
+        if not self.predict_mode:
+            label = self.y[idx]
+            return concatenated_embeddings, label
+        return concatenated_embeddings
+
+
+class SentenceEmbeddingsGraphAbstractWithNeighbors(BaseSentenceEmbeddings):
+    def __init__(self, params) -> None:
+        super().__init__(params, "SentenceEmbeddingsGraphAbstractWithNeighbors")
+
+    def __getitem__(self, idx):
+
+        # pos1 = random.randint(0, 1)
+        # pos2 = 1-pos1
+        pos1 = 0
+        pos2 = 1
+
+        current_node1, current_node2 = int(self.X[idx, pos1]), int(self.X[idx, pos2])
+
+        emb1 = torch.from_numpy(self.abstract_embeddings[current_node1])
+        emb2 = torch.from_numpy(self.abstract_embeddings[current_node2])
+
+        neighbors_node1 = list(self.G.neighbors(current_node1))
+        neighbors_node2 = list(self.G.neighbors(current_node2))
+
+        mean_emb_n1 = torch.zeros(emb1.shape)
+        mean = [torch.from_numpy(self.abstract_embeddings[n1]).unsqueeze(0) for n1 in neighbors_node1 if n1 != current_node2]
+        if len(mean)>0:
+            mean_emb_n1 = torch.mean(torch.cat(mean,dim=0), dim = 0)
+
+        mean_emb_n2 = torch.zeros(emb2.shape)
+        mean = [torch.from_numpy(self.abstract_embeddings[n2]).unsqueeze(0) for n2 in neighbors_node2 if n2 != current_node1]
+        if len(mean)>0:
+            mean_emb_n2 = torch.mean(torch.cat(mean,dim=0), dim = 0)
+
+        # keyword_feat1 = torch.from_numpy(self.keywords_embeddings[pos1]).flatten()
+        # keyword_feat2 = torch.from_numpy(self.keywords_embeddings[pos2]).flatten()
+
+        keyword_feat1 = torch.from_numpy(self.keywords_embeddings[pos1]).mean(dim=0).flatten()
+        keyword_feat2 = torch.from_numpy(self.keywords_embeddings[pos2]).mean(dim=0).flatten()
+        cosine_feature = F.cosine_similarity(torch.from_numpy(self.keywords_embeddings[pos1]), torch.from_numpy(self.keywords_embeddings[pos2]), dim=1)
+        
+        concatenated_embeddings = torch.cat((cosine_feature, emb1, emb2, keyword_feat1, keyword_feat2, mean_emb_n1, mean_emb_n2, torch.Tensor(self.X[idx, 2:])), dim=0)
 
         if not self.predict_mode:
             label = self.y[idx]

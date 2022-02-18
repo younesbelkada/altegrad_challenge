@@ -2,6 +2,7 @@ import torch.nn as nn
 from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 from pytorch_lightning import LightningModule
 import torch
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 from utils.agent_utils import get_net
 
@@ -59,9 +60,15 @@ class BaseModule(LightningModule):
         optimizer = optimizer(self.parameters(), lr=self.optim_param.lr, weight_decay=self.optim_param.weight_decay)
         
         if self.optim_param.scheduler:
-            scheduler = LinearWarmupCosineAnnealingLR(
-                optimizer, warmup_epochs=self.optim_param.warmup_epochs, max_epochs=self.optim_param.max_epochs
-            )
+            # scheduler = LinearWarmupCosineAnnealingLR(
+            #     optimizer, warmup_epochs=self.optim_param.warmup_epochs, max_epochs=self.optim_param.max_epochs
+            # )
+            scheduler = {"scheduler": ReduceLROnPlateau(
+                        optimizer, mode="min", patience=5, min_lr=5e-6
+                        ),
+                        "monitor": "val/loss"
+                        }
+
             return [[optimizer], [scheduler]]
 
         return optimizer 
