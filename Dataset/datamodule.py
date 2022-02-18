@@ -67,6 +67,8 @@ class BaseDataModule(LightningDataModule):
             batch_size=self.config.batch_size,
             num_workers=self.config.num_workers,
             shuffle = False,
-            collate_fn=coll_fn
+            collate_fn=coll_fn,
+            pin_memory =True,
+            
         )
         return predict_loader

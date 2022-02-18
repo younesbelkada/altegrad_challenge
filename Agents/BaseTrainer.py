@@ -65,18 +65,27 @@ class BaseTrainer:
                 gpus=self.config.gpu,
                 auto_lr_find=True,
                 accelerator="auto",
-                default_root_dir = self.wb_run.save_dir
+                default_root_dir = self.wb_run.save_dir,
+                
                 
             )
             trainer.logger = self.wb_run
             trainer.tune(self.pl_model, datamodule=self.datamodule)
-            
+        
+        if not self.config.debug:
+            torch.autograd.set_detect_anomaly(False)
+            torch.autograd.profiler.profile(False)
+            torch.autograd.profiler.emit_nvtx(False)
+            torch.backends.cudnn.benchmark = True
+
+        
         trainer = pl.Trainer(
             logger=self.wb_run,  # W&B integration
             callbacks=self.get_callbacks(),
             gpus=self.config.gpu,  # use all available GPU's
             max_epochs=self.config.max_epochs,  # number of epochs
             log_every_n_steps=1,
+            amp_backend = "apex"
         )
         trainer.logger = self.wb_run
         trainer.fit(self.pl_model, datamodule=self.datamodule)

@@ -13,6 +13,7 @@ from keybert import KeyBERT
 import torch.nn.functional as F
 from utils.dataset_utils import get_progress_bar
 from utils.dataset_utils import get_authors_dict
+
 class BaseSentenceEmbeddings(Dataset):
     def __init__(self, params, name_dataset) -> None:
         super().__init__()
@@ -32,18 +33,17 @@ class BaseSentenceEmbeddings(Dataset):
         
         if self.params.use_keywords_embed or self.params.use_abstract_embed:
             self.abstracts = get_abstracts_dict(path = path_txt)
-        
+
         if self.params.use_abstract_embed or self.params.use_neighbors_embed:
             self.abstract_embeddings_file = self.params.abstract_embeddings_file
             self.load_abstract_embeddings()
         
         if self.params.use_keywords_embed:
-            
             self.keywords_embeddings_file = self.params.keywords_embeddings_file
             self.keywords_file = self.params.keywords_file
             self.nb_keywords = self.params.nb_keywords
             self.load_keywords()
-        
+
         if self.params.use_authors_embed:
             self.dict_authors, unique_authors = get_authors_dict(self.path_authors)
             self.unique_authors = len(unique_authors)
@@ -85,27 +85,7 @@ class BaseSentenceEmbeddings(Dataset):
         # list_features.append(sum_uni)
         # list_features.append(abs_uni)
         # list_features.append(len_com_term)
-        
-        # (4, 5) keywords length and intersection
-        # set_key_1 = set(self.keywords[edg0]) 
-        # set_key_2 = set(self.keywords[edg1]) 
 
-        # len_keywords = len(set_key_1)
-        # len_com_keywords = len(set_key_1.intersection(set_key_2))
-        
-        # list_features.append(len_keywords)
-        # list_features.append(len_com_keywords)
-        
-        # Keywords features 
-
-        # keyword_feat1 = self.keywords_embeddings[edg0]
-        # keyword_feat2 = self.keywords_embeddings[edg1]
-
-        # list_features.append(keyword_feat1)
-        # list_features.append(keyword_feat2)
-
-        # return tuple(list_features)
-        # return torch.cat([torch.Tensor(f) for f in list_features])
         return torch.tensor(list_features)
 
     def get_neighbors_embeddings(self, current_node1, current_node2, emb_dim=768):
@@ -117,6 +97,9 @@ class BaseSentenceEmbeddings(Dataset):
         neighbors_node1 = list(neighbors_node1)
         neighbors_node2 = list(neighbors_node2)
         
+        intersection = len(set(neighbors_node1).intersection(neighbors_node2))
+        
+        
         mean_emb_n1 = torch.zeros(emb_dim)
         mean = [torch.from_numpy(self.abstract_embeddings[n1]).unsqueeze(0) for n1 in neighbors_node1 if n1 != current_node2]
         if len(mean)>0:
@@ -127,7 +110,7 @@ class BaseSentenceEmbeddings(Dataset):
         if len(mean)>0:
             mean_emb_n2 = torch.mean(torch.cat(mean, dim=0), dim = 0)
 
-        return torch.cat((mean_emb_n1, mean_emb_n2))
+        return torch.cat((mean_emb_n1, mean_emb_n2,torch.Tensor([intersection])))
 
     def get_abstract_embeddings(self, current_node1, current_node2):
         
@@ -160,10 +143,9 @@ class BaseSentenceEmbeddings(Dataset):
 
         # return torch.cat((keyword_feat_mean1, keyword_feat_mean2, cosine_feature, pdist_feature))
         # return torch.cat((cosine_feature, pdist_feature))
-        return torch.tensor([len_com_keywords, len_keywords])
+        return torch.tensor([len_com_keywords])
 
     def get_authors_embeddings(self, current_node1, current_node2):
-        
         
         authors_node1, authors_node2 = self.dict_authors[current_node1][randint(0, len(self.dict_authors[current_node1])-1)], self.dict_authors[current_node2][randint(0, len(self.dict_authors[current_node2])-1)]
         authors_node1, authors_node2 = self.dict_authors_to_index[authors_node1], self.dict_authors_to_index[authors_node2]
@@ -252,15 +234,8 @@ class BaseSentenceEmbeddings(Dataset):
             self.abstract_embeddings = np.load(open(self.abstract_embeddings_file, 'rb'))
 
     def build_predict(self):
-        
-        self.logger.info("Building predict ...")
-        
-        if self.params.use_abstract_embed:
-            self.load_abstract_embeddings()
-        
-        if self.params.use_keywords_embed:        
-            self.load_keywords()
 
+        self.logger.info("Building predict ...")
         self.predict_mode = True
         
         with open(self.path_predict, 'r') as file:
@@ -276,13 +251,6 @@ class BaseSentenceEmbeddings(Dataset):
     def build_train(self):
 
         self.logger.info(f"Building train ...")
-        
-        if self.params.use_abstract_embed:
-            self.load_abstract_embeddings()
-        
-        if self.params.use_keywords_embed:        
-            self.load_keywords()
-            
         self.predict_mode = False
         
         nodes = list(self.G.nodes())
@@ -291,8 +259,8 @@ class BaseSentenceEmbeddings(Dataset):
         m = self.G.number_of_edges()
         n = self.G.number_of_nodes()
 
-        X = np.zeros((2*m, 2), dtype=int)
-        y = np.zeros(2*m)
+        X = []
+        y = []
 
         self.logger.info("Starting loop ...")
 
@@ -301,8 +269,8 @@ class BaseSentenceEmbeddings(Dataset):
             task1 = progress.add_task(f"[cyan]Processing embeddings ", total = m, info = "-")
             for i, edge in enumerate(self.G.edges()):
                 
-                X[2*i] = edge
-                y[2*i] = 1
+                X.append(edge)
+                y.append(1)
                 
                 n1 = nodes[randint(0, n-1)] 
                 n2 = nodes[randint(0, n-1)]
@@ -311,13 +279,14 @@ class BaseSentenceEmbeddings(Dataset):
                     n1 = nodes[randint(0, n-1)]
                     n2 = nodes[randint(0, n-1)]
 
-                X[2*i+1] = n1, n2
-                y[2*i+1] = 0 
+                X.append((n1, n2))
+                y.append(0) 
                 
                 progress.update(task1, advance=1, info = f"{i}/{m}")
         
         self.X = X
-        self.y = y
+        self.y = torch.Tensor(y).float()
+
         self.logger.info("Finished building train ...")
 
         self.clean()
@@ -350,7 +319,7 @@ class BaseSentenceEmbeddings(Dataset):
         del self.abstracts
 
     def __len__(self):
-        return self.y.shape[0]
+        return len(self.y)
 
     def __getitem__(self, idx):
         raise NotImplementedError(f'Should be implemented in derived class!')

@@ -18,6 +18,8 @@ class MLP(nn.Module):
                                             )
                             )
 
+    
+        
         self.layers.append(nn.Sequential(nn.Linear(2*in_size, in_size),
                                             self.norm(in_size),
                                             self.activation(),
@@ -26,14 +28,13 @@ class MLP(nn.Module):
                 )
 
         for i in range(int(log(in_size, 2))):
-            
-                
             self.layers.append(nn.Sequential(nn.Linear(in_size, in_size//2),
-                                            self.norm(in_size//2),
-                                            self.activation(),
-                                            nn.Dropout(params.dropout)
-                                            )
-            )
+                                                self.norm(in_size//2),
+                                                self.activation(),
+                                                nn.Dropout(params.dropout)
+                                                )
+                )
+                
             
             in_size //= 2
             
