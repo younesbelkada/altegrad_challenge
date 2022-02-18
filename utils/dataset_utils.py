@@ -23,7 +23,7 @@ def get_authors_dict(path):
             authors[int(node)] = authors_list
             total_authors.extend(authors_list)
     unique_authors = np.unique(np.array(total_authors))
-    return authors, unique
+    return authors, unique_authors
 
 def get_progress_bar():
     return Progress(

@@ -12,7 +12,7 @@ from utils.logger import init_logger
 from keybert import KeyBERT
 import torch.nn.functional as F
 from utils.dataset_utils import get_progress_bar
-
+from utils.dataset_utils import get_authors_dict
 class BaseSentenceEmbeddings(Dataset):
     def __init__(self, params, name_dataset) -> None:
         super().__init__()
@@ -27,13 +27,25 @@ class BaseSentenceEmbeddings(Dataset):
         self.G = nx.read_edgelist(path_edges, delimiter=',', create_using=nx.Graph(), nodetype=int)
 
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-        self.abstracts = get_abstracts_dict(path = path_txt)
+        
         self.params = params
-
-        self.abstract_embeddings_file = self.params.abstract_embeddings_file
-        self.keywords_embeddings_file = self.params.keywords_embeddings_file
-        self.keywords_file = self.params.keywords_file
-        self.nb_keywords = self.params.nb_keywords
+        
+        if self.params.use_keywords_embed or self.params.use_abstract_embed:
+            self.abstracts = get_abstracts_dict(path = path_txt)
+        
+        if self.params.use_abstract_embed or self.params.use_neighbors_embed:
+            self.abstract_embeddings_file = self.params.abstract_embeddings_file
+        
+        if self.params.use_keywords_embed:
+            
+            self.keywords_embeddings_file = self.params.keywords_embeddings_file
+            self.keywords_file = self.params.keywords_file
+            self.nb_keywords = self.params.nb_keywords
+        
+        if self.params.use_authors_embed:
+            self.dict_authors, unique_authors = get_authors_dict(self.path_authors)
+            self.unique_authors = len(unique_authors)
+            self.dict_authors_to_index = {unique_authors[i]:i for i in range(len(unique_authors))}
 
     def get_features(self, edg0, edg1):
 
@@ -132,6 +144,12 @@ class BaseSentenceEmbeddings(Dataset):
 
         return torch.cat((keyword_feat_mean1, keyword_feat_mean2, cosine_feature, pdist_feature))
 
+    def get_authors_embeddings(self, current_node1, current_node2):
+        
+        
+        authors_node1, authors_node2 = self.dict_authors[current_node1][randint(0, len(self.dict_authors[current_node1])-1)], self.dict_authors[current_node2][randint(0, len(self.dict_authors[current_node2])-1)]
+        authors_node1, authors_node2 = self.dict_authors_to_index[authors_node1], self.dict_authors_to_index[authors_node2]
+
     def load_keywords(self):
 
         if self.params.only_create_keywords:
@@ -227,9 +245,8 @@ class BaseSentenceEmbeddings(Dataset):
 
         self.predict_mode = True
         
-
         with open(self.path_predict, 'r') as file:
-            self.X = np.zeros((len(file),2))
+            self.X = np.zeros((len(file),2), dtype = int)
             for i in range(len(file)):
                 line = file[i]
                 line = line.split(',')

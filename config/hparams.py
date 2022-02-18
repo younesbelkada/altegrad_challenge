@@ -81,9 +81,10 @@ class DatasetParams:
     nb_keywords                      : int = 10               
 
     use_neighbors_embed              : bool = True
-    use_keywords_embed               : bool = False
+    use_keywords_embed               : bool = True
     use_abstract_embed               : bool = True
     use_handcrafted_embed            : bool = True
+    use_authors_embed                : bool = False   
 
 @dataclass
 class Parameters:
