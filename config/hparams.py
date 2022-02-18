@@ -81,10 +81,14 @@ class DatasetParams:
     only_create_keywords             : bool = False
     nb_keywords                      : int = 10               
 
+    create_npy_embeddings            : bool = True
+
     use_neighbors_embed              : bool = True
     use_keywords_embed               : bool = False
     use_abstract_embed               : bool = True
     use_handcrafted_embed            : bool = True
+
+    root_embeddings                  : str  = osp.join(os.getcwd(), "input", "train_npy")
 
 @dataclass
 class Parameters:

@@ -1,5 +1,5 @@
 from random import randint
-
+import os
 import numpy as np
 import torch
 import random
@@ -168,9 +168,13 @@ class SentenceEmbeddingsGraphWithNeighbors(BaseSentenceEmbeddings):
 class SentenceEmbeddingsFeatures(BaseSentenceEmbeddings):
     def __init__(self, params) -> None:
         super().__init__(params, "SentenceEmbeddingsFeatures")
-
+        
     def __getitem__(self, idx):
-        concatenated_embeddings = self.X[idx]
+        
+        n1, n2 = self.X[idx]
+
+        concatenated_embeddings = self.get_final_embeddings(n1, n2)
+        
         if not self.predict_mode:
             label = self.y[idx]
             return concatenated_embeddings, label

@@ -214,30 +214,6 @@ class BaseSentenceEmbeddings(Dataset):
             self.logger.info(f"Loading {self.abstract_embeddings_file} abstract embeddings")
             self.abstract_embeddings = np.load(open(self.abstract_embeddings_file, 'rb'))
 
-    # def build_predict(self):
-        
-    #     self.logger.info("Building predict ...")
-        
-    #     if self.params.use_abstract_embed:
-    #         self.load_abstract_embeddings()
-        
-    #     if self.params.use_keywords_embed:        
-    #         self.load_keywords()
-
-    #     self.predict_mode = True
-
-    #     X = []
-    #     with open(self.path_predict, 'r') as file:
-    #         for line in file:
-    #             line = line.split(',')
-    #             edg0 = int(line[0])
-    #             edg1 = int(line[1])
-    #             X.append(self.get_features(edg0, edg1))
-
-    #     X = np.array(X)
-    #     self.X = X
-    #     self.y = np.zeros(self.X.shape[0])
-
     def build_predict(self):
         
         self.logger.info("Building predict ...")
@@ -250,114 +226,65 @@ class BaseSentenceEmbeddings(Dataset):
 
         self.predict_mode = True
         
-        row_dim =  6 + (self.params.use_neighbors_embed)*self.emb_dim*2 + \
-                        (self.params.use_abstract_embed)*self.emb_dim*2
-        
-        X = []
+
         with open(self.path_predict, 'r') as file:
-            for line in file:
+            self.X = np.zeros((len(file),2))
+            for i in range(len(file)):
+                line = file[i]
                 line = line.split(',')
                 edg0 = int(line[0])
                 edg1 = int(line[1])
-                X.append(self.get_final_embeddings(edg0, edg1, row_dim))
-
-        X = np.array(X)
-        self.X = X
+                self.X.append((edg0, edg1))
+                
         self.y = np.zeros(self.X.shape[0])
 
-    # def build_train(self):
-        
-    #     self.logger.info("Building train ...")
-
-    #     self.predict_mode = False
-
-    #     m = self.G.number_of_edges()
-    #     n = self.G.number_of_nodes()
-    #     X_train = np.zeros((2*m, 6))
-    #     y_train = np.zeros(2*m)
-
-    #     nodes = list(self.G.nodes())
-        
-    #     for i, edge in enumerate(self.G.edges()):
-
-    #         X_train[2*i] = self.get_features(edge[0], edge[1])
-    #         y_train[2*i] = 1 
-
-    #         n1 = nodes[randint(0, n-1)] 
-    #         n2 = nodes[randint(0, n-1)]
-
-    #         # FIXME can create pairs of the test set try without negative pairs
-    #         while (n1, n2) in self.G.edges():
-    #             n1 = nodes[randint(0, n-1)]
-    #             n2 = nodes[randint(0, n-1)]
-
-    #         X_train[2*i+1] = self.get_features(n1, n2)
-    #         y_train[2*i+1] = 0
-
-    #     self.logger.info("Finished building train ...")
-
-    #     self.X = X_train
-    #     self.y = y_train    
-
     def build_train(self):
-        
-        self.logger.info("Building train ...")
 
-        self.predict_mode = False
+        self.logger.info(f"Building train ...")
         
         if self.params.use_abstract_embed:
             self.load_abstract_embeddings()
         
         if self.params.use_keywords_embed:        
             self.load_keywords()
-
-        self.emb_dim = 768
-        m = self.G.number_of_edges()
-        n = self.G.number_of_nodes()
+            
+        self.predict_mode = False
         
-        row_dim =  (self.params.use_handcrafted_embed)*4 + (self.params.use_neighbors_embed)*self.emb_dim*2 + \
-                        (self.params.use_abstract_embed)*self.emb_dim*2
-
-        X_train = np.zeros((2*m, row_dim), dtype = np.float32)
-        y_train = np.zeros(2*m)
-
         nodes = list(self.G.nodes())
-        
+        edges = list(self.G.edges())
+
+        m = len(edges)
+        n = len(nodes)
+
+        self.X = np.zeros((2*m, 2))
+        self.y = np.zeros(2*m)
+
         self.logger.info("Starting loop ...")
 
         with get_progress_bar() as progress:
             task1 = progress.add_task(f"[cyan]Processing embeddings ", total = m)
-            for i, edge in enumerate(self.G.edges()):
-                progress.update(task1, advance=1)
-
-                X_train[2*i] = self.get_final_embeddings(edge[0], edge[1], row_dim)
-                y_train[2*i] = 1 
-
+            for i in range(m):
+                
+                self.X[2*i] = edges[i]
+                self.y[2*i] = 1
+                
                 n1 = nodes[randint(0, n-1)] 
                 n2 = nodes[randint(0, n-1)]
-
-                # FIXME can create pairs of the test set try without negative pairs
-                while (n1, n2) in self.G.edges():
+                
+                while (n1, n2) in edges:
                     n1 = nodes[randint(0, n-1)]
                     n2 = nodes[randint(0, n-1)]
 
-                X_train[2*i+1] = self.get_final_embeddings(edge[0], edge[1], row_dim)
-                y_train[2*i+1] = 0
+                self.X[2*i+1] = (n1, n2)
+                self.y[2*i+1] = 0 
+                
+                progress.update(task1, advance=1)
 
         self.logger.info("Finished building train ...")
 
         self.clean()
-        
-        self.X = X_train
-        self.y = y_train  
 
-        name_file = osp.join(os.getcwd(), "input", f"full_embeddings_X.npy")
-        np.save(open(name_file, "wb"), self.X)
-
-        name_file = osp.join(os.getcwd(), "input", f"full_embeddings_y.npy")
-        np.save(open(name_file, "wb"), self.y)
-
-    def get_final_embeddings(self, node1, node2, row_dim):
+    def get_final_embeddings(self, node1, node2):
         final_embeddings = torch.tensor([])
 
         if self.params.use_handcrafted_embed:
@@ -378,13 +305,6 @@ class BaseSentenceEmbeddings(Dataset):
         
         self.logger.info("Cleaning useless class attributes ...")
 
-        if self.params.use_abstract_embed:
-            del self.abstract_embeddings
-        
-        if self.params.use_keywords_embed:
-            del self.keywords_embeddings
-            del self.keywords
-        
         del self.G 
         del self.abstracts
 
