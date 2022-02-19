@@ -118,7 +118,7 @@ class BaseTrainer:
         monitor = "val/loss"
         mode = "min"
         wandb.define_metric(monitor, summary=mode)
-        save_top_k = 5
+        save_top_k = 1
         every_n_epochs = 1
         callbacks += [
             AutoSaveModelCheckpoint #ModelCheckpoint

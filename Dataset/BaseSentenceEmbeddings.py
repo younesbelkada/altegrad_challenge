@@ -31,20 +31,22 @@ class BaseSentenceEmbeddings(Dataset):
         
         self.params = params
         
-        if self.params.use_keywords_embed or self.params.use_abstract_embed:
+        self.embed_param = params.embed_param
+        
+        if self.embed_param.use_keywords_embeddings or self.embed_param.use_abstract_embeddings:
             self.abstracts = get_abstracts_dict(path = path_txt)
 
-        if self.params.use_abstract_embed or self.params.use_neighbors_embed:
+        if self.embed_param.use_abstract_embeddings or self.embed_param.use_neighbors_embeddings:
             self.abstract_embeddings_file = self.params.abstract_embeddings_file
             self.load_abstract_embeddings()
         
-        if self.params.use_keywords_embed:
+        if self.embed_param.use_keywords_embeddings:
             self.keywords_embeddings_file = self.params.keywords_embeddings_file
             self.keywords_file = self.params.keywords_file
             self.nb_keywords = self.params.nb_keywords
             self.load_keywords()
 
-        if self.params.use_authors_embed:
+        if self.embed_param.use_authors_embeddings:
             self.dict_authors, unique_authors = get_authors_dict(self.path_authors)
             self.unique_authors = len(unique_authors)
             self.dict_authors_to_index = {unique_authors[i]:i for i in range(len(unique_authors))}
@@ -52,9 +54,9 @@ class BaseSentenceEmbeddings(Dataset):
     def get_input_dim(self):
         return self.get_final_embeddings(0,1).shape[0]
     
-    def get_features(self, edg0, edg1):
+    def get_handcrafted_embeddings(self, edg0, edg1):
 
-        list_features = [edg0, edg1]
+        list_features = []
         # Graph features
         # (1, 2) degree of two nodes
         # (3) sum of degrees of two nodes
@@ -88,6 +90,33 @@ class BaseSentenceEmbeddings(Dataset):
 
         return torch.tensor(list_features)
 
+    def get_jaccard_coefficient(self, current_node1, current_node2):
+        return nx.jaccard_coefficient(self.G, [(current_node1, current_node2)])
+    
+    # def get_eigenvector_centrality(self,e1,e2):
+    #     return nx.eigenvector_centrality(self.G) 
+    
+    def get_clustering(self,e1,e2):
+        return nx.clustering(self.G,[e1,e2])
+        
+    def get_adamic_adar_index(self,e1,e2):
+        return nx.adamic_adar_index(self.G,(e1,e2))
+    
+    def get_preferential_attachment(self,e1,e2):
+        return nx.preferential_attachment(self.G,(e1,e2))
+    
+    def get_cn_soundarajan_hopcroft(self,e1,e2):
+        return nx.cn_soundarajan_hopcroft(self.G,(e1,e2))
+    
+    def get_ra_index_soundarajan_hopcroft(self,e1,e2):
+        return nx.ra_index_soundarajan_hopcroft(self.G,e1,e2)
+    
+    def get_shortest_path(self,e1,e2):
+        return len(nx.shortest_path(self.G,e1,e2))
+    
+    def get_common_neighbor_centrality(self,e1,e2):
+        return nx.common_neighbor_centrality(self.G,(e1,e2))
+    
     def get_neighbors_embeddings(self, current_node1, current_node2, emb_dim=768):
         
 
@@ -150,6 +179,16 @@ class BaseSentenceEmbeddings(Dataset):
         authors_node1, authors_node2 = self.dict_authors[current_node1][randint(0, len(self.dict_authors[current_node1])-1)], self.dict_authors[current_node2][randint(0, len(self.dict_authors[current_node2])-1)]
         authors_node1, authors_node2 = self.dict_authors_to_index[authors_node1], self.dict_authors_to_index[authors_node2]
 
+    def get_final_embeddings(self, node1, node2):
+        final_embeddings = torch.tensor([])
+        params = (self.embed_param).__dict__
+        for i,embed in enumerate(params):
+            if params[embed]:
+                nodes_embeddings    = getattr(self, embed.replace("use","get"))(node1, node2)[2:]
+                final_embeddings    = torch.cat((final_embeddings, nodes_embeddings))
+                
+        return final_embeddings
+    
     def load_keywords(self):
 
         if self.params.only_create_keywords:
@@ -291,26 +330,7 @@ class BaseSentenceEmbeddings(Dataset):
 
         self.clean()
 
-    def get_final_embeddings(self, node1, node2):
-        final_embeddings = torch.tensor([])
-
-        if self.params.use_handcrafted_embed:
-            nodes_embeddings    = self.get_features(node1, node2)[2:]
-            final_embeddings    = nodes_embeddings 
-
-        if self.params.use_abstract_embed:
-            abstract_embeddings = self.get_abstract_embeddings(node1, node2)
-            final_embeddings    = torch.cat((final_embeddings, abstract_embeddings))
-        
-        if self.params.use_neighbors_embed:
-            neighbor_embeddings = self.get_neighbors_embeddings(node1,node2)
-            final_embeddings    = torch.cat((final_embeddings, neighbor_embeddings))
-
-        if self.params.use_keywords_embed:
-            keywords_embeddings = self.get_keywords_embeddings(node1,node2)
-            final_embeddings    = torch.cat((final_embeddings, keywords_embeddings))
-        
-        return final_embeddings
+    
     
     def clean(self):
         

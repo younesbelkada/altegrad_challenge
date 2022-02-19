@@ -28,7 +28,7 @@ class Hparams:
     weights_path   : str           = "weights"
     dev_run        : bool          = False
     train          : bool          = True
-    best_model     : str           = "golden-capybara-639"
+    best_model     : str           = "elated-aardvark-644"
 
 @dataclass
 class NetworkParams:
@@ -36,7 +36,7 @@ class NetworkParams:
     weight_checkpoints : str = ""
     artifact : str = ""
     vocab_size : int = 138499
-    dropout         : float = 0.65
+    dropout         : float = 0.7
     normalization   : str   = 'BatchNorm1d'
     activation      : str   = 'GELU'
     input_size      : int   = 0    # dummy arg
@@ -56,6 +56,25 @@ class OptimizerParams:
     max_epochs    : int   = 1000
 
 @dataclass
+class EmbedParams:
+    use_neighbors_embeddings          : bool = True
+    use_keywords_embeddings           : bool = True
+    use_abstract_embeddings           : bool = True
+    use_handcrafted_embeddings        : bool = True 
+    use_jaccard_coefficient           : bool = True
+    use_clustering                    : bool = False
+    use_adamic_adar_index             : bool = False
+    use_preferential_attachment       : bool = False
+    use_cn_soundarajan_hopcroft       : bool = False
+    use_ra_index_soundarajan_hopcroft : bool = False
+    use_shortest_path                 : bool = False
+    use_common_neighbor_centrality    : bool = False
+    
+    use_eigenvector_centrality        : bool = False
+    use_authors_embeddings            : bool = False 
+    
+
+@dataclass
 class DatasetParams:
     """Dataset Parameters
     ! The batch_size and number of crops should be defined here
@@ -73,13 +92,9 @@ class DatasetParams:
     name_transformer                 : str = 'sentence-transformers/allenai-specter'
     only_create_abstract_embeddings  : bool = False
     only_create_keywords             : bool = False
-    nb_keywords                      : int = 10               
+    nb_keywords                      : int = 10    
+    embed_param   : EmbedParams     = EmbedParams()           
 
-    use_neighbors_embed              : bool = True
-    use_keywords_embed               : bool = True
-    use_abstract_embed               : bool = True
-    use_handcrafted_embed            : bool = True
-    use_authors_embed                : bool = False   
 
 @dataclass
 class Parameters:
@@ -88,7 +103,7 @@ class Parameters:
     data_param    : DatasetParams   = DatasetParams()
     network_param : NetworkParams   = NetworkParams()
     optim_param   : OptimizerParams = OptimizerParams()
-
+    
     def __post_init__(self):
         """Post-initialization code"""
         # Mostly used to set some values based on the chosen hyper parameters
