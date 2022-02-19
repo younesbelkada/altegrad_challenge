@@ -28,7 +28,7 @@ class Hparams:
     weights_path   : str           = "weights"
     dev_run        : bool          = False
     train          : bool          = True
-    best_model     : str           = "scarlet-rain-621"
+    best_model     : str           = "golden-capybara-639"
 
 @dataclass
 class NetworkParams:
@@ -36,7 +36,7 @@ class NetworkParams:
     weight_checkpoints : str = ""
     artifact : str = ""
     vocab_size : int = 138499
-    dropout         : float = 0.6
+    dropout         : float = 0.65
     normalization   : str   = 'BatchNorm1d'
     activation      : str   = 'GELU'
     input_size      : int   = 0    # dummy arg
@@ -49,7 +49,7 @@ class OptimizerParams:
 
     optimizer     : str   = "Adam"  # Optimizer default vit: AdamW, default resnet50: Adam
     lr            : float = 0.003     # learning rate,               default = 5e-4
-    min_lr        : float = 5e-6     # min lr reached at the end of the cosine schedule
+    min_lr        : float = 5e-9     # min lr reached at the end of the cosine schedule
     weight_decay  : float = 1e-8
     scheduler     : bool  = True
     warmup_epochs : int   = 5
