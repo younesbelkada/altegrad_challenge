@@ -91,31 +91,92 @@ class BaseSentenceEmbeddings(Dataset):
         return torch.tensor(list_features)
 
     def get_jaccard_coefficient(self, current_node1, current_node2):
-        return nx.jaccard_coefficient(self.G, [(current_node1, current_node2)])
+        jac = nx.jaccard_coefficient(self.G, [(current_node1, current_node2)])
+        return [list(jac)[-1][-1]]
+
     
     # def get_eigenvector_centrality(self,e1,e2):
     #     return nx.eigenvector_centrality(self.G) 
     
     def get_clustering(self,e1,e2):
-        return nx.clustering(self.G,[e1,e2])
+        res = list(nx.clustering(self.G,[e1,e2]).values())
+        if len(res)!=2:
+            res = [0,0]
+        return res
         
     def get_adamic_adar_index(self,e1,e2):
-        return nx.adamic_adar_index(self.G,(e1,e2))
-    
+        res = []
+        preds =  nx.adamic_adar_index(self.G,[(e1,e2)])
+        try: 
+            for u, v, p in preds:
+                res.append(p)
+            return res
+        except :
+            return [0]
+        
     def get_preferential_attachment(self,e1,e2):
-        return nx.preferential_attachment(self.G,(e1,e2))
+        res = []
+        preds = nx.preferential_attachment(self.G,[(e1,e2)])
+        try: 
+            for u, v, p in preds:
+                res.append(p)
+            return res
+        except :
+            return [0]
     
     def get_cn_soundarajan_hopcroft(self,e1,e2):
-        return nx.cn_soundarajan_hopcroft(self.G,(e1,e2))
+        res = []
+        preds = nx.cn_soundarajan_hopcroft(self.G,[(e1,e2)])
+        try: 
+            for u, v, p in preds:
+                res.append(p)
+            return res
+        except :
+            return [0]
     
     def get_ra_index_soundarajan_hopcroft(self,e1,e2):
-        return nx.ra_index_soundarajan_hopcroft(self.G,e1,e2)
+        res = []
+        preds = nx.ra_index_soundarajan_hopcroft(self.G,[(e1,e2)])
+        try: 
+            for u, v, p in preds:
+                res.append(p)
+            return res
+        except :
+            return [0]
+    
     
     def get_shortest_path(self,e1,e2):
-        return len(nx.shortest_path(self.G,e1,e2))
+        return [nx.shortest_path_length(self.G,e1,e2)]
     
     def get_common_neighbor_centrality(self,e1,e2):
-        return nx.common_neighbor_centrality(self.G,(e1,e2))
+        res = []
+        preds = nx.common_neighbor_centrality(self.G,(e1,e2))
+        try: 
+            for u, v, p in preds:
+                res.append(p)
+            return res
+        except :
+            return [0]
+    
+
+    
+    def get_sorenson_index(self,e1,e2):
+        
+        deg_edg0 = self.G.degree(e1)
+        deg_edg1 = self.G.degree(e2)
+        
+        
+        neighbors_node1 = self.G.neighbors(e1)
+        neighbors_node2 = self.G.neighbors(e2)
+
+        neighbors_node1 = list(neighbors_node1)
+        neighbors_node2 = list(neighbors_node2)
+        
+        intersection = len(set(neighbors_node1).intersection(neighbors_node2))
+        
+        if (deg_edg0+deg_edg1) == 0:
+            return  [0]
+        return [(2*intersection)/(deg_edg0+deg_edg1)]
     
     def get_neighbors_embeddings(self, current_node1, current_node2, emb_dim=768):
         
@@ -182,11 +243,17 @@ class BaseSentenceEmbeddings(Dataset):
     def get_final_embeddings(self, node1, node2):
         final_embeddings = torch.tensor([])
         params = (self.embed_param).__dict__
+
+        # remove their connexion as if we were testing
         for i,embed in enumerate(params):
             if params[embed]:
-                nodes_embeddings    = getattr(self, embed.replace("use","get"))(node1, node2)[2:]
-                final_embeddings    = torch.cat((final_embeddings, nodes_embeddings))
-                
+                fct = getattr(self, embed.replace("use","get"))
+                nodes_embeddings    = fct(node1, node2)
+                if not torch.is_tensor(nodes_embeddings):
+                    nodes_embeddings = torch.tensor(nodes_embeddings)
+                final_embeddings     = torch.cat((final_embeddings, nodes_embeddings))
+
+            
         return final_embeddings
     
     def load_keywords(self):
@@ -310,6 +377,8 @@ class BaseSentenceEmbeddings(Dataset):
                 
                 X.append(edge)
                 y.append(1)
+                
+                
                 
                 n1 = nodes[randint(0, n-1)] 
                 n2 = nodes[randint(0, n-1)]

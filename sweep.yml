@@ -1,0 +1,20 @@
+program: main.py
+method: random
+metric:
+  goal: minimize
+  name: loss
+parameters:
+  use_clustering : 
+    values: [True, False]
+  use_jaccard_coefficient : 
+    values: [True, False]
+  use_adamic_adar_index : 
+    values: [True, False]
+  use_preferential_attachment : 
+    values: [True, False]
+  use_cn_soundarajan_hopcroft : 
+    values: [True, False]
+  use_ra_index_soundarajan_hopcroft : 
+    values: [True, False]
+  use_sorenson_index : 
+    values: [True, False]

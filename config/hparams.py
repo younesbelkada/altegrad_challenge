@@ -18,13 +18,13 @@ class Hparams:
     """Hyperparameters of for the run"""
 
     wandb_entity  : str  = "altegrad-gnn-link-prediction"         # name of the project
-    debug         : bool = True            # test code before running, if testing, no checkpoints are written
+    debug         : bool = False            # test code before running, if testing, no checkpoints are written
     wandb_project : str  = f"{'test-'*debug}altegrad"
     root_dir      : str  = os.getcwd()  # root_dir
     seed_everything: Optional[int] = None   # seed for the whole run
     tune_lr        : bool          = True  # tune the model on first run
     gpu            : int           = 1      # number or gpu
-    max_epochs     : int           = 1000    # maximum number of epochs
+    max_epochs     : int           = 30    # maximum number of epochs
     weights_path   : str           = "weights"
     dev_run        : bool          = False
     train          : bool          = True
@@ -32,11 +32,11 @@ class Hparams:
 
 @dataclass
 class NetworkParams:
-    network_name   : Optional[str] = "MLP"     # dataset, use <Dataset>Eval for FT
-    weight_checkpoints : str = ""
-    artifact : str = ""
-    vocab_size : int = 138499
-    dropout         : float = 0.7
+    network_name       : Optional[str] = "MLP"     # dataset, use <Dataset>Eval for FT
+    weight_checkpoints : str           = ""
+    artifact           : str           = ""
+    vocab_size         : int           = 138499
+    dropout         : float = 0.6
     normalization   : str   = 'BatchNorm1d'
     activation      : str   = 'GELU'
     input_size      : int   = 0    # dummy arg
@@ -53,7 +53,7 @@ class OptimizerParams:
     weight_decay  : float = 1e-8
     scheduler     : bool  = True
     warmup_epochs : int   = 5
-    max_epochs    : int   = 1000
+    max_epochs    : int   = 20
 
 @dataclass
 class EmbedParams:
@@ -61,17 +61,20 @@ class EmbedParams:
     use_keywords_embeddings           : bool = True
     use_abstract_embeddings           : bool = True
     use_handcrafted_embeddings        : bool = True 
-    use_jaccard_coefficient           : bool = True
-    use_clustering                    : bool = False
-    use_adamic_adar_index             : bool = False
-    use_preferential_attachment       : bool = False
-    use_cn_soundarajan_hopcroft       : bool = False
-    use_ra_index_soundarajan_hopcroft : bool = False
-    use_shortest_path                 : bool = False
-    use_common_neighbor_centrality    : bool = False
     
+    use_jaccard_coefficient           : bool = True
+    use_clustering                    : bool = True
+    use_adamic_adar_index             : bool = True
+    use_preferential_attachment       : bool = True
+    use_cn_soundarajan_hopcroft       : bool = True
+    use_ra_index_soundarajan_hopcroft : bool = True
+    use_sorenson_index                : bool = True
+    
+    # Too big to work
     use_eigenvector_centrality        : bool = False
     use_authors_embeddings            : bool = False 
+    use_shortest_path                 : bool = False
+    use_common_neighbor_centrality    : bool = False
     
 
 @dataclass
@@ -80,7 +83,7 @@ class DatasetParams:
     ! The batch_size and number of crops should be defined here
     """
     dataset_name            : Optional[str]           = "SentenceEmbeddingsFeatures"     # dataset, use <Dataset>Eval for FT
-    num_workers             : int                     = 10         # number of workers for dataloadersint
+    num_workers             : int                     = 16         # number of workers for dataloadersint
     batch_size              : int                     = 2048     # batch_size
     split_val               : float                   = 0.2
     root_dataset            : Optional[str]           = osp.join(os.getcwd(), "input")
