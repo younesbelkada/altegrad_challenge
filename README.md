@@ -11,12 +11,7 @@ Then,
 
 ```python3 main.py```
 
-## Useful links
+## Tips
+This model obtained the best results. However, it did not have the gfinal code architecture. Which is why it has to be repoduced on this branch : the order of the features is different in the new version. Here it is handcrafted, abstract, neighbors, keywords. 
 
-* Get ideas from [here](https://pytorch-lightning.readthedocs.io/en/latest/notebooks/course_UvA-DL/06-graph-neural-networks.html)
-
-# TODO
-[ ] Keywords embeddings
-[ ] Remove negative pairs
-[ ] use authors
-[ ] Ensemble learning
+The final project is available on our github, and contains all the features. 
