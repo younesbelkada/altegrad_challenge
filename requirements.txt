@@ -1,0 +1,10 @@
+keybert==0.5.0
+networkx==2.6.3
+numpy
+pytorch_lightning==1.5.9
+rich==11.2.0
+scikit_learn==1.0.2
+sentence_transformers==2.2.0
+simple_parsing==0.0.18
+torch==1.9.0
+torch_geometric==2.0.3
