@@ -9,7 +9,6 @@ import pytorch_lightning as pl
 import simple_parsing
 import torch
 import torch.optim
-from simple_parsing.helpers import Serializable, choice, dict_field, list_field
 
 ################################## Global parameters ##################################
 
