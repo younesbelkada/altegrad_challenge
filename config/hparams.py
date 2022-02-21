@@ -16,18 +16,18 @@ import torch.optim
 class Hparams:
     """Hyperparameters of for the run"""
 
-    wandb_entity  : str  = "altegrad-gnn-link-prediction"         # name of the project
-    debug         : bool = False            # test code before running, if testing, no checkpoints are written
-    wandb_project : str  = f"altegrad_challenge"
-    root_dir      : str  = os.getcwd()  # root_dir
-    seed_everything: Optional[int] = None   # seed for the whole run
-    tune_lr        : bool          = True  # tune the model on first run
-    gpu            : int           = 1      # number or gpu
-    max_epochs     : int           = 30    # maximum number of epochs
-    weights_path   : str           = "weights"
-    dev_run        : bool          = False
-    train          : bool          = True
-    best_model     : str           = "gallant-sweep-14" # then galant
+    wandb_entity    : str          = "altegrad-gnn-link-prediction"         # name of the project
+    debug           : bool         = False            # test code before running, if testing, no checkpoints are written
+    wandb_project   : str          = f"altegrad_challenge"
+    root_dir        : str          = os.getcwd()  # root_dir
+    seed_everything : Optional[int]= None   # seed for the whole run
+    tune_lr         : bool         = True  # tune the model on first run
+    gpu             : int          = 1      # number or gpu
+    max_epochs      : int          = 30    # maximum number of epochs
+    weights_path    : str          = "weights"
+    dev_run         : bool         = False
+    train           : bool         = True
+    best_model      : str          = "gallant-sweep-14" # then galant
     
 
 @dataclass
@@ -89,9 +89,9 @@ class DatasetParams:
     root_dataset            : Optional[str]           = osp.join(os.getcwd(), "input")
     vocab_size              : int                     = 138499
 
-    abstract_embeddings_artifact     : str = 'altegrad-gnn-link-prediction/altegrad/Allenai-SpecterEmbedding:v1'
-    keywords_embeddings_artifact     : str = 'altegrad-gnn-link-prediction/altegrad/keywords-emb-10-sentence-transformers-allenai-specter.npy:v0'
-    keywords_artifact                : str = 'altegrad-gnn-link-prediction/altegrad/keywords-10-sentence-transformers-allenai-specter.npy:v0'
+    abstract_embeddings_artifact     : str = 'altegrad-gnn-link-prediction/altegrad_challenge/embeddings.npy:v1'
+    keywords_embeddings_artifact     : str = 'altegrad-gnn-link-prediction/altegrad_challenge/keywords-emb-10-sentence-transformers-allenai-specter.npy:v0'
+    keywords_artifact                : str = 'altegrad-gnn-link-prediction/altegrad_challenge/keywords-10-sentence-transformers-allenai-specter.npy:v0'
     name_transformer                 : str = 'sentence-transformers/allenai-specter'
     only_create_abstract_embeddings  : bool = False
     only_create_keywords             : bool = False
@@ -109,11 +109,6 @@ class Parameters:
     
     def __post_init__(self):
         """Post-initialization code"""
-        # Mostly used to set some values based on the chosen hyper parameters
-        # since we will use different models, backbones and datamodules
-        # self.hparams.wandb_project = (f"{'test-'*self.hparams.debug}altegrad") 
-        
-        # Set random seed
         if self.hparams.seed_everything is None:
             self.hparams.seed_everything = random.randint(1, 10000)
             

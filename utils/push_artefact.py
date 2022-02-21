@@ -5,16 +5,16 @@ import wandb
 
 
 def push_artifact(name):
-    path_artifact = os.path.join('input', f'{name}')
+    path_artifact = name
 
     wandb.init(
         entity="altegrad-gnn-link-prediction",
-        project="altegrad"
+        project="altegrad_challenge"
     )
 
     name = name.replace('_', '-')
     artifact = wandb.Artifact(
-        name=name,
+        name=os.path.basename(name),
         type="dataset",
         metadata={
             "emb_dim":768
