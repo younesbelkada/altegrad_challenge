@@ -92,7 +92,7 @@ class BaseTrainer:
 
     def predict(self):
         trainer = pl.Trainer(gpus=self.config.gpu)
-        best_path = f"altegrad-gnn-link-prediction/test-altegrad/{self.config.best_model}:top-1"
+        best_path = f"altegrad-gnn-link-prediction/{self.config.wandb_project}/{self.config.best_model}:top-1"
         best_model = get_artifact(best_path, type="model")
         
         raw_predictions = trainer.predict(self.pl_model, self.datamodule, ckpt_path=best_model)
