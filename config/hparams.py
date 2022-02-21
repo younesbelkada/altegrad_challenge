@@ -62,7 +62,7 @@ class DatasetParams:
     """
     dataset_name            : Optional[str]           = "SentenceEmbeddingsFeatures"     # dataset, use <Dataset>Eval for FT
     num_workers             : int                     = 10         # number of workers for dataloadersint
-    batch_size              : int                     = 2048     # batch_size
+    batch_size              : int                     = 64     # batch_size
     split_val               : float                   = 0.2
     root_dataset            : Optional[str]           = osp.join(os.getcwd(), "input")
     vocab_size              : int                     = 138499

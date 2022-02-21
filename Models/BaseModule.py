@@ -1,5 +1,4 @@
 import torch.nn as nn
-from pl_bolts.optimizers.lr_scheduler import LinearWarmupCosineAnnealingLR
 from pytorch_lightning import LightningModule
 import torch
 from torch.optim.lr_scheduler import ReduceLROnPlateau
