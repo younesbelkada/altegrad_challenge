@@ -19,7 +19,7 @@ class Hparams:
 
     wandb_entity  : str  = "altegrad-gnn-link-prediction"         # name of the project
     debug         : bool = False            # test code before running, if testing, no checkpoints are written
-    wandb_project : str  = f"{'test-'*debug}altegrad"
+    wandb_project : str  = "test-altegrad"
     root_dir      : str  = os.getcwd()  # root_dir
     seed_everything: Optional[int] = None   # seed for the whole run
     tune_lr        : bool          = True  # tune the model on first run
@@ -62,13 +62,13 @@ class EmbedParams:
     use_abstract_embeddings           : bool = True
     use_handcrafted_embeddings        : bool = True 
     
-    use_jaccard_coefficient           : bool = True
-    use_clustering                    : bool = True
-    use_adamic_adar_index             : bool = True
-    use_preferential_attachment       : bool = True
-    use_cn_soundarajan_hopcroft       : bool = True
-    use_ra_index_soundarajan_hopcroft : bool = True
-    use_sorenson_index                : bool = True
+    use_jaccard_coefficient           : bool = False
+    use_clustering                    : bool = False
+    use_adamic_adar_index             : bool = False
+    use_preferential_attachment       : bool = False
+    use_cn_soundarajan_hopcroft       : bool = False
+    use_ra_index_soundarajan_hopcroft : bool = False
+    use_sorenson_index                : bool = False
     
     # Too big to work
     use_eigenvector_centrality        : bool = False
@@ -84,7 +84,7 @@ class DatasetParams:
     """
     dataset_name            : Optional[str]           = "SentenceEmbeddingsFeatures"     # dataset, use <Dataset>Eval for FT
     num_workers             : int                     = 16         # number of workers for dataloadersint
-    batch_size              : int                     = 2048     # batch_size
+    batch_size              : int                     = 512     # batch_size
     split_val               : float                   = 0.2
     root_dataset            : Optional[str]           = osp.join(os.getcwd(), "input")
     vocab_size              : int                     = 138499
