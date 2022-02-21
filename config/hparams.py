@@ -18,7 +18,7 @@ class Hparams:
 
     wandb_entity    : str          = "altegrad-gnn-link-prediction"         # name of the project
     debug           : bool         = False            # test code before running, if testing, no checkpoints are written
-    wandb_project   : str          = f"altegrad_challenge"
+    wandb_project   : str          = f"test-altegrad"
     root_dir        : str          = os.getcwd()  # root_dir
     seed_everything : Optional[int]= None   # seed for the whole run
     tune_lr         : bool         = True  # tune the model on first run
@@ -27,7 +27,7 @@ class Hparams:
     weights_path    : str          = "weights"
     dev_run         : bool         = False
     train           : bool         = True
-    best_model      : str          = "gallant-sweep-14" # then galant
+    best_model      : str          = "elated-aardvark-644" # then galant
     
 
 @dataclass
@@ -82,13 +82,13 @@ class DatasetParams:
     ! The batch_size and number of crops should be defined here
     """
     dataset_name            : Optional[str]           = "SentenceEmbeddingsFeatures"     # dataset, use <Dataset>Eval for FT
-    num_workers             : int                     = 16         # number of workers for dataloadersint
-    batch_size              : int                     = 512     # batch_size
+    num_workers             : int                     = 8         # number of workers for dataloadersint
+    batch_size              : int                     = 32     # batch_size
     split_val               : float                   = 0.2
     root_dataset            : Optional[str]           = osp.join(os.getcwd(), "input")
     vocab_size              : int                     = 138499
 
-    abstract_embeddings_artifact     : str = 'altegrad-gnn-link-prediction/altegrad_challenge/embeddings.npy:v1'
+    abstract_embeddings_artifact     : str = 'altegrad-gnn-link-prediction/altegrad_challenge/embeddings.npy:v0'
     keywords_embeddings_artifact     : str = 'altegrad-gnn-link-prediction/altegrad_challenge/keywords-emb-10-sentence-transformers-allenai-specter.npy:v0'
     keywords_artifact                : str = 'altegrad-gnn-link-prediction/altegrad_challenge/keywords-10-sentence-transformers-allenai-specter.npy:v0'
     name_transformer                 : str = 'sentence-transformers/allenai-specter'
