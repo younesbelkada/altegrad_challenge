@@ -12,12 +12,6 @@ Then,
 
 ```python3 main.py```
 
-## Useful links
-
-* Get ideas from [here](https://pytorch-lightning.readthedocs.io/en/latest/notebooks/course_UvA-DL/06-graph-neural-networks.html)
-
-# TODO
-[ ] Keywords embeddings
-[ ] Remove negative pairs
-[ ] use authors
-[ ] Ensemble learning
+## Tips
+The best model can be used using the `best-model` branch, as it does not use this implementation of the code. 
+This branch is the final code as it allows customization of the various embeddings and corresponds to the latest version of the code.
