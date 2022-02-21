@@ -1,5 +1,6 @@
 # altegrad_challenge
-Altegrad 2021-2022 - Citation Prediction Challenge
+
+Altegrad 2021-2022 - Citation Prediction Challenge - APAVOU Clément - BELKADA Younes - ZUCKER Arthur
 
 ## Getting started
 
