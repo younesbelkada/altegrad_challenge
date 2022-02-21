@@ -28,7 +28,7 @@ class Hparams:
     weights_path   : str           = "weights"
     dev_run        : bool          = False
     train          : bool          = True
-    best_model     : str           = "golden-capybara-639"
+    best_model     : str           = "elated-aardvark-644"
 
 @dataclass
 class NetworkParams:
@@ -67,9 +67,9 @@ class DatasetParams:
     root_dataset            : Optional[str]           = osp.join(os.getcwd(), "input")
     vocab_size              : int                     = 138499
 
-    abstract_embeddings_artifact     : str = 'altegrad-gnn-link-prediction/altegrad/Allenai-SpecterEmbedding:v1'
-    keywords_embeddings_artifact     : str = 'altegrad-gnn-link-prediction/altegrad/keywords-emb-10-sentence-transformers-allenai-specter.npy:v0'
-    keywords_artifact                : str = 'altegrad-gnn-link-prediction/altegrad/keywords-10-sentence-transformers-allenai-specter.npy:v0'
+    abstract_embeddings_artifact     : str = 'altegrad-gnn-link-prediction/altegrad_challenge/embeddings.npy:v0'
+    keywords_embeddings_artifact     : str = 'altegrad-gnn-link-prediction/altegrad_challenge/keywords-emb-10-sentence-transformers-allenai-specter.npy:v0'
+    keywords_artifact                : str = 'altegrad-gnn-link-prediction/altegrad_challenge/keywords-10-sentence-transformers-allenai-specter.npy:v0'
     name_transformer                 : str = 'sentence-transformers/allenai-specter'
     only_create_abstract_embeddings  : bool = False
     only_create_keywords             : bool = False
