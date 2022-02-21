@@ -1,5 +1,6 @@
 import torch.nn as nn
 
+
 class LogisticRegression(nn.Module):
     def __init__(self, params):
         super(LogisticRegression, self).__init__()

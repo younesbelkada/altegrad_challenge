@@ -1,6 +1,8 @@
+from math import log
+
 import torch
 import torch.nn as nn
-from math import log
+
 
 class MLPWithAuthors(nn.Module):
     def __init__(self, params) -> None:

@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 from torch_geometric.nn.conv import GATConv
 
+
 class GATModel(nn.Module):
     def __init__(self, params):
         super().__init__()
@@ -28,20 +29,21 @@ class GATModel(nn.Module):
         # print(neighbors_node1.shape)
         # print(neighbors_node2.shape)
         #neighbors_node1, neighbors_node2 = neighbors_node1[neighbors_node1 != -1], neighbors_node2[neighbors_node2 != -1]
-        
-        
+
         outputs = []
         for i in range(neighbors_node1.shape[0]):
             features_neighbors_1 = self.embedding(neighbors_node1[i])
             features_neighbors_2 = self.embedding(neighbors_node2[i])
 
-
-            features_neighbors_1 = self.gat_conv_subgraph1(features_neighbors_1, adj1[i])
-            features_neighbors_2 = self.gat_conv_subgraph2(features_neighbors_2, adj2[i])
+            features_neighbors_1 = self.gat_conv_subgraph1(
+                features_neighbors_1, adj1[i])
+            features_neighbors_2 = self.gat_conv_subgraph2(
+                features_neighbors_2, adj2[i])
 
             # print(features_neighbors_1.shape)
             # print(features_neighbors_2.shape)
 
-            output = self.mlp(torch.cat((features_neighbors_1[0], features_neighbors_2[0]), dim=0))
+            output = self.mlp(
+                torch.cat((features_neighbors_1[0], features_neighbors_2[0]), dim=0))
             outputs.append(output)
         return torch.cat(outputs)
