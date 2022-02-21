@@ -19,7 +19,7 @@ class Hparams:
 
     wandb_entity  : str  = "altegrad-gnn-link-prediction"         # name of the project
     debug         : bool = False            # test code before running, if testing, no checkpoints are written
-    wandb_project : str  = f"{'test-'*debug}altegrad"
+    wandb_project : str  = f"altegrad_challenge"
     root_dir      : str  = os.getcwd()  # root_dir
     seed_everything: Optional[int] = None   # seed for the whole run
     tune_lr        : bool          = True  # tune the model on first run
@@ -28,7 +28,8 @@ class Hparams:
     weights_path   : str           = "weights"
     dev_run        : bool          = False
     train          : bool          = True
-    best_model     : str           = "elated-aardvark-644"
+    best_model     : str           = "gallant-sweep-14" # then galant
+    
 
 @dataclass
 class NetworkParams:
@@ -36,7 +37,7 @@ class NetworkParams:
     weight_checkpoints : str           = ""
     artifact           : str           = ""
     vocab_size         : int           = 138499
-    dropout         : float = 0.6
+    dropout         : float = 0.75
     normalization   : str   = 'BatchNorm1d'
     activation      : str   = 'GELU'
     input_size      : int   = 0    # dummy arg
@@ -63,10 +64,10 @@ class EmbedParams:
     use_handcrafted_embeddings        : bool = True 
     
     use_jaccard_coefficient           : bool = True
-    use_clustering                    : bool = True
-    use_adamic_adar_index             : bool = True
-    use_preferential_attachment       : bool = True
-    use_cn_soundarajan_hopcroft       : bool = True
+    use_clustering                    : bool = False
+    use_adamic_adar_index             : bool = False
+    use_preferential_attachment       : bool = False
+    use_cn_soundarajan_hopcroft       : bool = False
     use_ra_index_soundarajan_hopcroft : bool = True
     use_sorenson_index                : bool = True
     
