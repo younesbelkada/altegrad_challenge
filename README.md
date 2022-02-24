@@ -13,13 +13,19 @@ In this challenge, we are given a large scientific citation graph, with each nod
 
 ## :hammer: Getting started
 
-```pip3 install requirements.txt```
+```
+pip3 install requirements.txt
+```
 
 Then,
 
-```sh download_data.sh```
+```
+sh download_data.sh
+```
 
-```python3 main.py```
+```
+python3 main.py
+```
 
 ## :round_pushpin: Tips
 The best model can be used using the `best-model` branch, as it does not use this implementation of the code. 
@@ -31,10 +37,28 @@ This branch is the final code as it allows customization of the various embeddin
     
 | Model| loss validation |loss test (private leaderboard) | Run  |
 |---|---|---|---|
-| Best model | 0.07775 | 0.07939
- | [![](https://github.com/wandb/assets/blob/main/wandb-github-badge-gradient.svg)](https://wandb.ai/altegrad-gnn-link-prediction/test-altegrad/runs/1cwlegzz?workspace=user-clementapa) | 
+| Best model | 0.07775 | 0.07939 | [![](https://github.com/wandb/assets/blob/main/wandb-github-badge-gradient.svg)](https://wandb.ai/altegrad-gnn-link-prediction/test-altegrad/runs/1cwlegzz?workspace=user-clementapa) |
 </p>
 
 All experiments are available on wandb: \
  [![](https://github.com/wandb/assets/blob/main/wandb-github-badge-gradient.svg)](https://wandb.ai/altegrad-gnn-link-prediction/altegrad_challenge?workspace=user-clementapa)\
-[![](https://github.com/wandb/assets/blob/main/wandb-github-badge-gradient.svg)](https://wandb.ai/altegrad-gnn-link-prediction/test-altegrad?workspace=user-clementapa). 
+[![](https://github.com/wandb/assets/blob/main/wandb-github-badge-gradient.svg)](https://wandb.ai/altegrad-gnn-link-prediction/test-altegrad?workspace=user-clementapa)
+
+## Some tools used: 
+ 
+[![](https://raw.githubusercontent.com/huggingface/awesome-huggingface/main/logo.svg)](https://huggingface.co/sentence-transformers/allenai-specter)
+
+[![](https://github.com/MaartenGr/KeyBERT/blob/master/images/logo.png)](https://maartengr.github.io/KeyBERT/)
+
+## Some citations
+
+```bibtex
+@misc{cohan2020specter,
+      title={SPECTER: Document-level Representation Learning using Citation-informed Transformers}, 
+      author={Arman Cohan and Sergey Feldman and Iz Beltagy and Doug Downey and Daniel S. Weld},
+      year={2020},
+      eprint={2004.07180},
+      archivePrefix={arXiv},
+      primaryClass={cs.CL}
+}
+```
