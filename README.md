@@ -9,7 +9,7 @@
 The kaggle challenge is the following : https://www.kaggle.com/c/altegrad-2021/leaderboard
 ## :mag_right: Introduction
 
-In this challenge, we are given a large scientific citation graph, with each node corresponding to a certain article. The dataset consists of 138 499 vertices i.e articles, with their associated abstract and list of authors. The goal is to be able to predict whether two nodes are citing each other, given all this information. In the next sections, we will try to elaborate on the various intuitions behind our approaches, and present the obtained results as well as some possible interpretations for each observations. The provided code corresponds to the code that we have used for the best model (i.e the right commit).
+In this challenge, we are given a large scientific citation graph, with each node corresponding to a certain article. The dataset consists of 138 499 vertices i.e articles, with their associated abstract and list of authors. The goal is to be able to predict whether two nodes are citing each other, given all this information. In the next sections, we will try to elaborate on the various intuitions behind our approaches, and present the obtained results as well as some possible interpretations for each observations. The provided code corresponds to the code that we have used for the best model (i.e [the right commit](https://github.com/younesbelkada/altegrad_challenge/tree/best-model) ).
 
 ## :hammer: Getting started
 
