@@ -48,9 +48,9 @@ All experiments are available on wandb: \
  
  <p align="center">
     <a href="https://huggingface.co/sentence-transformers/allenai-specter">
-  <img src="https://raw.githubusercontent.com/huggingface/awesome-huggingface/main/logo.svg" width="100" height="200" alt="logo hugging face"/>
+  <img src="https://raw.githubusercontent.com/huggingface/awesome-huggingface/main/logo.svg" width="25%" height="25%" alt="logo hugging face"/>
     <a href="https://maartengr.github.io/KeyBERT/">
-  <img src="https://github.com/MaartenGr/KeyBERT/blob/master/images/logo.png" width="100" height="200" alt="logo Keybert"/>
+  <img src="https://github.com/MaartenGr/KeyBERT/blob/master/images/logo.png" width="25%" height="25%" alt="logo Keybert"/>
 </p>
 
 ## Some citations
