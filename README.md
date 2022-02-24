@@ -46,9 +46,12 @@ All experiments are available on wandb: \
 
 ## Some tools used: 
  
-[![](https://raw.githubusercontent.com/huggingface/awesome-huggingface/main/logo.svg)](https://huggingface.co/sentence-transformers/allenai-specter)
-
-[![](https://github.com/MaartenGr/KeyBERT/blob/master/images/logo.png)](https://maartengr.github.io/KeyBERT/)
+ <p align="center">
+    <a href="https://huggingface.co/sentence-transformers/allenai-specter">
+  <img src="https://raw.githubusercontent.com/huggingface/awesome-huggingface/main/logo.svg" width="100" height="30" alt="logo hugging face"/>
+    <a href="https://maartengr.github.io/KeyBERT/">
+  <img src="https://github.com/MaartenGr/KeyBERT/blob/master/images/logo.png" width="100" height="30" alt="logo Keybert"/>
+</p>
 
 ## Some citations
 
