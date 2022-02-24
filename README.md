@@ -47,12 +47,12 @@ All experiments are available on wandb: \
 ## :diamonds: Best MLP architecture
 
  <p align="center">
-  <img src="https://github.com/younesbelkada/altegrad_challenge/assets/MLP_arch.svg" width="100%" height="100%" alt="Architecture"/>
+  <img src="https://github.com/younesbelkada/altegrad_challenge/blob/main/assets/MLP_arch.svg" width="100%" height="100%" alt="Architecture"/>
 </p>
 
 ## :paperclip: Presentation of our work
 
-[Report](https://github.com/younesbelkada/altegrad_challenge/assets/Report.pdf) & [Slides](https://github.com/younesbelkada/altegrad_challenge/assets/Slides.pdf)
+[Report](https://github.com/younesbelkada/altegrad_challenge/blob/main/assets/Report.pdf) & [Slides](https://github.com/younesbelkada/altegrad_challenge/blob/main/assets/Slides.pdf)
 
 ## :wrench: Some tools used
  
